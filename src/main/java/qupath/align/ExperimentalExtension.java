@@ -19,7 +19,7 @@
  * #L%
  */
 
-package qupath.experimental;
+package qupath.align;
 
 import org.controlsfx.control.action.Action;
 
@@ -58,11 +58,11 @@ public class ExperimentalExtension implements QuPathExtension {
 
     @Override
     public String getName() {
-        return "Experimental extension";
+        return "Align extension";
     }
 
     @Override
     public String getDescription() {
-        return "New features that are still being developed or tested";
+        return "Adds the 'Interactive image alignment' command";
     }
 }

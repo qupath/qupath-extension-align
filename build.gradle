@@ -1,19 +1,28 @@
 plugins {
-    id 'qupath.extension-conventions'
-    id 'java-library'
+  id 'java-library'
+  // To create a shadow/fat jar, including dependencies
+  // (not very useful here)
+  id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-ext.moduleName = 'qupath.extension.experimental'
-archivesBaseName = 'qupath-extension-experimental'
-description = "QuPath extension containing experimental functionality, which may later be added to another module."
-
-configurations {
-  implementation.extendsFrom jfxtras
-  implementation.extendsFrom guava
-  implementation.extendsFrom controlsfx
-  implementation.extendsFrom commonsmath
+repositories {
+  mavenLocal()
+  mavenCentral()
 }
+
+ext.moduleName = 'qupath.extension.align'
+
+description = 'QuPath extension for interactive image alignment'
+
+version = "0.3.0-SNAPSHOT"
 
 dependencies {
-    implementation project(':qupath-extension-processing')
+    shadow "io.github.qupath:qupath-gui-fx:0.3.0-SNAPSHOT"
+    shadow "org.slf4j:slf4j-api:1.7.25"
+}
+
+// Copy dependencies
+task copyDependencies(type: Copy) {
+  from configurations.default
+  into 'build/libs'
 }
