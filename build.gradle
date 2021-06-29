@@ -6,8 +6,16 @@ plugins {
 }
 
 repositories {
-  mavenLocal()
   mavenCentral()
+  
+  maven {
+    url "https://maven.scijava.org/content/repositories/releases"
+  }
+  
+  maven {
+    url "https://maven.scijava.org/content/repositories/snapshots"
+  }
+  
 }
 
 ext.moduleName = 'qupath.extension.align'
@@ -18,7 +26,13 @@ version = "0.3.0-SNAPSHOT"
 
 dependencies {
     shadow "io.github.qupath:qupath-gui-fx:0.3.0-SNAPSHOT"
-    shadow "org.slf4j:slf4j-api:1.7.25"
+    shadow "org.slf4j:slf4j-api:1.7.30"
+}
+
+processResources {
+  from ("${projectDir}/LICENSE.txt") {
+    into 'licenses/'
+  }
 }
 
 // Copy dependencies
