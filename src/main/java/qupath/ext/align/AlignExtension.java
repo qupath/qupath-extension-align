@@ -19,21 +19,22 @@
  * #L%
  */
 
-package qupath.align;
+package qupath.ext.align;
 
 import org.controlsfx.control.action.Action;
 
+import qupath.ext.align.gui.InteractiveImageAlignmentCommand;
 import qupath.lib.gui.ActionTools;
 import qupath.lib.gui.ActionTools.ActionDescription;
 import qupath.lib.gui.ActionTools.ActionMenu;
 import qupath.lib.gui.QuPathGUI;
-import qupath.lib.gui.align.InteractiveImageAlignmentCommand;
+import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
 
 /**
  * Extension to make more experimental commands present in the GUI.
  */
-public class ExperimentalExtension implements QuPathExtension {
+public class AlignExtension implements QuPathExtension, GitHubProject {
 	
 	@SuppressWarnings("javadoc")
 	public class ExperimentalCommands {
@@ -65,4 +66,9 @@ public class ExperimentalExtension implements QuPathExtension {
     public String getDescription() {
         return "Adds the 'Interactive image alignment' command";
     }
+
+	@Override
+	public GitHubRepo getRepository() {
+		return GitHubRepo.create(getName(), "qupath", "qupath-extension-align");
+	}
 }

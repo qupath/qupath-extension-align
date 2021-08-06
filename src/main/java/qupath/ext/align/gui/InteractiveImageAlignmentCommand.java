@@ -19,7 +19,7 @@
  * #L%
  */
 
-package qupath.lib.gui.align;
+package qupath.ext.align.gui;
 
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.dialogs.Dialogs;
