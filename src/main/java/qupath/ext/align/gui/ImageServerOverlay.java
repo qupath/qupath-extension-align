@@ -19,7 +19,7 @@
  * #L%
  */
 
-package qupath.lib.gui.align;
+package qupath.ext.align.gui;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
