@@ -22,7 +22,7 @@ ext.moduleName = 'qupath.extension.align'
 
 description = 'QuPath extension for interactive image alignment'
 
-version = "0.3.0-SNAPSHOT"
+version = "0.3.0-rc2"
 
 dependencies {
     shadow "io.github.qupath:qupath-gui-fx:0.3.0-SNAPSHOT"
