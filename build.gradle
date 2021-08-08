@@ -25,7 +25,7 @@ description = 'QuPath extension for interactive image alignment'
 version = "0.3.0-rc2"
 
 dependencies {
-    shadow "io.github.qupath:qupath-gui-fx:0.3.0-SNAPSHOT"
+    shadow "io.github.qupath:qupath-gui-fx:0.3.0-rc2"
     shadow "org.slf4j:slf4j-api:1.7.30"
 }
 

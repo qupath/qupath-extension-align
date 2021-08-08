@@ -24,6 +24,7 @@ package qupath.ext.align;
 import org.controlsfx.control.action.Action;
 
 import qupath.ext.align.gui.InteractiveImageAlignmentCommand;
+import qupath.lib.common.Version;
 import qupath.lib.gui.ActionTools;
 import qupath.lib.gui.ActionTools.ActionDescription;
 import qupath.lib.gui.ActionTools.ActionMenu;
@@ -71,4 +72,10 @@ public class AlignExtension implements QuPathExtension, GitHubProject {
 	public GitHubRepo getRepository() {
 		return GitHubRepo.create(getName(), "qupath", "qupath-extension-align");
 	}
+	
+	@Override
+	public Version getQuPathVersion() {
+		return Version.parse("0.3.0-rc2");
+	}
+	
 }
