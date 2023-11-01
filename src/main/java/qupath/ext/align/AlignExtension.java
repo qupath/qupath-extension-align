@@ -25,10 +25,10 @@ import org.controlsfx.control.action.Action;
 
 import qupath.ext.align.gui.InteractiveImageAlignmentCommand;
 import qupath.lib.common.Version;
-import qupath.lib.gui.ActionTools;
-import qupath.lib.gui.ActionTools.ActionDescription;
-import qupath.lib.gui.ActionTools.ActionMenu;
+import qupath.lib.gui.actions.ActionTools;
+import qupath.lib.gui.actions.annotations.ActionConfig;
 import qupath.lib.gui.QuPathGUI;
+import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
 
@@ -38,11 +38,11 @@ import qupath.lib.gui.extensions.QuPathExtension;
 public class AlignExtension implements QuPathExtension, GitHubProject {
 	
 	@SuppressWarnings("javadoc")
-	public class ExperimentalCommands {
+	public static class ExperimentalCommands {
 		
 		@ActionMenu("Analyze>Interactive image alignment")
-		@ActionDescription("Experimental command to interactively align images using an Affine transform. "
-				+ "This is currently not terribly useful in itself, but may be helpful as part of more complex scripting workflows.")
+		@ActionConfig("action"
+				)
 		public final Action actionInteractiveAlignment;
 
 		private ExperimentalCommands(QuPathGUI qupath) {
@@ -55,6 +55,7 @@ public class AlignExtension implements QuPathExtension, GitHubProject {
 	
     @Override
     public void installExtension(QuPathGUI qupath) {
+
     	qupath.installActions(ActionTools.getAnnotatedActions(new ExperimentalCommands(qupath)));
     }
 

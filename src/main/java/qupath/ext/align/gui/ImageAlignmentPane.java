@@ -570,7 +570,8 @@ public class ImageAlignmentPane {
 			// Read annotations from any data file
 			try {
 				// Try to get data from an open viewer first, if possible
-				for (var viewer : qupath.getViewers()) {
+
+				for (var viewer : qupath.getAllViewers()) {
 					var tempData = viewer.getImageData();
 					if (tempData != null && temp.equals(project.getEntry(viewer.getImageData()))) {
 						imageData = tempData;
