@@ -1,6 +1,6 @@
 rootProject.name = 'qupath-extension-align'
 
-gradle.ext.qupathVersion = "0.5.0"
+gradle.ext.qupathVersion = "0.5.0-rc2"
 
 dependencyResolutionManagement {
 
