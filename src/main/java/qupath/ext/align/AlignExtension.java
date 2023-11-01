@@ -31,6 +31,7 @@ import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
+import qupath.lib.projects.ResourceManager;
 
 /**
  * Extension to make more experimental commands present in the GUI.
@@ -39,15 +40,16 @@ public class AlignExtension implements QuPathExtension, GitHubProject {
 	
 	@SuppressWarnings("javadoc")
 	public static class ExperimentalCommands {
-		
-		@ActionMenu("Analyze>Interactive image alignment")
-		@ActionConfig("action"
-				)
+
+		@ActionMenu("Menu.Analyze>Alignment")
 		public final Action actionInteractiveAlignment;
 
 		private ExperimentalCommands(QuPathGUI qupath) {
 			var interactiveAlignment = new InteractiveImageAlignmentCommand(qupath);
 			actionInteractiveAlignment = qupath.createProjectAction(project -> interactiveAlignment.run());
+			actionInteractiveAlignment.setText("Interactive image alignment");
+			actionInteractiveAlignment.setLongText("Experimental command to interactively align images using an Affine transform." +
+					"This is currently not terribly useful in itself, but may be helpful as part of more complex scripting workflows.");
 		}
 		
 	}
