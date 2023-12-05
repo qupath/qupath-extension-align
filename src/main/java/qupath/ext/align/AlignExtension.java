@@ -2,7 +2,7 @@
  * #%L
  * This file is part of QuPath.
  * %%
- * Copyright (C) 2018 - 2020 QuPath developers, The University of Edinburgh
+ * Copyright (C) 2018 - 2023 QuPath developers, The University of Edinburgh
  * %%
  * QuPath is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -31,7 +31,6 @@ import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
-import qupath.lib.projects.ResourceManager;
 
 /**
  * Extension to make more experimental commands present in the GUI.
@@ -75,7 +74,7 @@ public class AlignExtension implements QuPathExtension, GitHubProject {
 	
 	@Override
 	public Version getQuPathVersion() {
-		return Version.parse("0.3.0-rc2");
+		return Version.parse("0.5.0");
 	}
 	
 }

@@ -2,12 +2,12 @@ plugins {
     id 'java-library'
     // To create a shadow/fat jar, including dependencies
     // (not very useful here)
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
     id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 repositories {
-//  mavenLocal()
+
   mavenCentral()
 
   maven {
@@ -22,9 +22,11 @@ repositories {
 
 ext.moduleName = 'qupath.extension.align'
 
-description = 'QuPath extension for interactive image alignment'
-
-version = "0.4.0"
+base {
+    description = 'QuPath extension for interactive image alignment'
+    version = "0.4.0"
+    group = "io.github.qupath"
+}
 ext.qupathVersion = gradle.ext.qupathVersion
 ext.qupathJavaVersion = 17
 
@@ -34,7 +36,7 @@ dependencies {
 }
 
 processResources {
-  from ("${projectDir}/LICENSE.txt") {
+  from ("${projectDir}/LICENSE") {
     into 'licenses/'
   }
 }
