@@ -1,12 +1,13 @@
 plugins {
-  id 'java-library'
-  // To create a shadow/fat jar, including dependencies
-  // (not very useful here)
-  id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'java-library'
+    // To create a shadow/fat jar, including dependencies
+    // (not very useful here)
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 repositories {
-//  mavenLocal()
+
   mavenCentral()
 
   maven {
@@ -21,17 +22,21 @@ repositories {
 
 ext.moduleName = 'qupath.extension.align'
 
-description = 'QuPath extension for interactive image alignment'
-
-version = "0.3.0"
+base {
+    description = 'QuPath extension for interactive image alignment'
+    version = "0.4.0"
+    group = "io.github.qupath"
+}
+ext.qupathVersion = gradle.ext.qupathVersion
+ext.qupathJavaVersion = 17
 
 dependencies {
-    shadow "io.github.qupath:qupath-gui-fx:0.3.0"
+    shadow "io.github.qupath:qupath-gui-fx:${qupathVersion}"
     shadow "org.slf4j:slf4j-api:1.7.30"
 }
 
 processResources {
-  from ("${projectDir}/LICENSE.txt") {
+  from ("${projectDir}/LICENSE") {
     into 'licenses/'
   }
 }
@@ -43,15 +48,9 @@ task copyDependencies(type: Copy) {
 }
 
 java {
-    def version = project.findProperty('toolchain')
-    if (!version)
-        version = 11
-    else if (version.strip() == 'skip')
-        version = null
-    if (version != null) {
-        logger.quiet("Setting toolchain to {}", version)
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(version)
-        }
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(qupathJavaVersion)
     }
+    withSourcesJar()
+    withJavadocJar()
 }

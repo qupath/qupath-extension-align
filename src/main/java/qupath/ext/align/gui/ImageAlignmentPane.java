@@ -2,7 +2,7 @@
  * #%L
  * This file is part of QuPath.
  * %%
- * Copyright (C) 2018 - 2020 QuPath developers, The University of Edinburgh
+ * Copyright (C) 2018 - 2023 QuPath developers, The University of Edinburgh
  * %%
  * QuPath is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -570,7 +570,8 @@ public class ImageAlignmentPane {
 			// Read annotations from any data file
 			try {
 				// Try to get data from an open viewer first, if possible
-				for (var viewer : qupath.getViewers()) {
+
+				for (var viewer : qupath.getAllViewers()) {
 					var tempData = viewer.getImageData();
 					if (tempData != null && temp.equals(project.getEntry(viewer.getImageData()))) {
 						imageData = tempData;

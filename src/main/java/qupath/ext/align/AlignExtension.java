@@ -2,7 +2,7 @@
  * #%L
  * This file is part of QuPath.
  * %%
- * Copyright (C) 2018 - 2020 QuPath developers, The University of Edinburgh
+ * Copyright (C) 2018 - 2023 QuPath developers, The University of Edinburgh
  * %%
  * QuPath is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -25,10 +25,10 @@ import org.controlsfx.control.action.Action;
 
 import qupath.ext.align.gui.InteractiveImageAlignmentCommand;
 import qupath.lib.common.Version;
-import qupath.lib.gui.ActionTools;
-import qupath.lib.gui.ActionTools.ActionDescription;
-import qupath.lib.gui.ActionTools.ActionMenu;
+import qupath.lib.gui.actions.ActionTools;
+import qupath.lib.gui.actions.annotations.ActionConfig;
 import qupath.lib.gui.QuPathGUI;
+import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
 
@@ -36,13 +36,11 @@ import qupath.lib.gui.extensions.QuPathExtension;
  * Extension to make more experimental commands present in the GUI.
  */
 public class AlignExtension implements QuPathExtension, GitHubProject {
-	
-	@SuppressWarnings("javadoc")
-	public class ExperimentalCommands {
-		
-		@ActionMenu("Analyze>Interactive image alignment")
-		@ActionDescription("Experimental command to interactively align images using an Affine transform. "
-				+ "This is currently not terribly useful in itself, but may be helpful as part of more complex scripting workflows.")
+
+	public static class ExperimentalCommands {
+
+		@ActionConfig(value = "alignAction", bundle = "qupath/ext/align/strings")
+		@ActionMenu("Menu.Analyze>Alignment")
 		public final Action actionInteractiveAlignment;
 
 		private ExperimentalCommands(QuPathGUI qupath) {
@@ -55,6 +53,7 @@ public class AlignExtension implements QuPathExtension, GitHubProject {
 	
     @Override
     public void installExtension(QuPathGUI qupath) {
+
     	qupath.installActions(ActionTools.getAnnotatedActions(new ExperimentalCommands(qupath)));
     }
 
@@ -75,7 +74,7 @@ public class AlignExtension implements QuPathExtension, GitHubProject {
 	
 	@Override
 	public Version getQuPathVersion() {
-		return Version.parse("0.3.0-rc2");
+		return Version.parse("0.5.0");
 	}
 	
 }
