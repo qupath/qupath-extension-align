@@ -41,6 +41,16 @@ import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
 import qupath.lib.regions.ImageRegion;
 
+import qupath.lib.roi.RoiTools;
+import qupath.lib.objects.PathObject;
+import qupath.lib.objects.PathObjects;
+import qupath.lib.roi.interfaces.ROI;
+
+import qupath.lib.objects.PathTileObject;
+import qupath.lib.objects.PathCellObject;
+import qupath.lib.objects.PathDetectionObject;
+
+
 /**
  * A {@link PathOverlay} implementation capable of painting one image on top of another, 
  * including an optional affine transformation.
@@ -116,6 +126,15 @@ public class ImageServerOverlay extends AbstractOverlay {
 		return affine;
 	}
 	
+	/**
+	 * Get the affine transform applied to the overlay image.
+	 * Making changes here will trigger repaints in the viewer.
+	 * @return
+	 */
+	public AffineTransform getTransform() {
+		return transform;
+	}
+
 	private void updateTransform() {
 		transform.setTransform(
 			affine.getMxx(),
@@ -158,5 +177,38 @@ public class ImageServerOverlay extends AbstractOverlay {
 		gCopy.dispose();
 				
 	}
-	
+
+	/**
+	 * Transform object, recursively transforming all child objects
+	 *
+	 * @param pathObject
+	 * @return
+	 */
+	public PathObject transformObject(PathObject pathObject) {
+		// Create a new object with the converted ROI
+		var roi = pathObject.getROI();
+		var roi2 = this.transformROI(roi, transform);
+
+		PathObject newObject = null;
+
+		newObject = PathObjects.createAnnotationObject(roi2, pathObject.getPathClass(), pathObject.getMeasurementList());
+		newObject.setName(pathObject.getName());
+
+		return newObject;
+	}
+
+	/**
+	 * Transform ROI (via conversion to Java AWT shape)
+	 *
+	 * @param roi
+	 * @param transform
+	 * @return
+	 */
+	private ROI transformROI(ROI roi, AffineTransform transform) {
+		var shape = RoiTools.getShape(roi); // Should be able to use roi.getShape() - but there's currently a bug in it for rectangles/ellipses!
+		var shape2 = transform.createTransformedShape(shape);
+		var roi2 = RoiTools.getShapeROI(shape2, roi.getImagePlane(), 0.5);
+		return roi2;
+	}
 }
+	
