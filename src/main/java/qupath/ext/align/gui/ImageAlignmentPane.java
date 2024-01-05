@@ -114,6 +114,7 @@ import qupath.lib.images.servers.ServerTools;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.classes.PathClass;
 import qupath.lib.objects.classes.PathClassFactory;
+import qupath.lib.objects.hierarchy.PathObjectHierarchy;
 import qupath.lib.projects.Project;
 import qupath.lib.projects.ProjectImageEntry;
 import qupath.lib.regions.RegionRequest;
@@ -406,6 +407,77 @@ public class ImageAlignmentPane {
 			content.putString(s);
 			Clipboard.getSystemClipboard().setContent(content);
 		});
+		Button btnImport = new Button("Propagate");
+		btnImport.setOnAction(e -> {
+			ImageData<BufferedImage> imageDataBase = viewer.getImageData();
+			ImageData<BufferedImage> imageDataSelected = selectedImageData.get();
+			if (imageDataBase == null) {
+				Dialogs.showNoImageError("Auto-alignment");
+				return;
+			}
+			if (imageDataSelected == null) {
+				Dialogs.showErrorMessage("Auto-alignment", "Please ensure an image overlay is selected!");
+				return;
+			}
+			if (imageDataBase == imageDataSelected) {
+				Dialogs.showErrorMessage("Auto-alignment", "Please select an image overlay, not the 'base' image from the viewer!");
+				return;
+			}
+
+			var overlay = getSelectedOverlay();
+			var transform = overlay == null ? null : overlay.getTransform();
+
+			if (transform == null) {
+				logger.warn("No transform found, can't import transformed annotations!");
+				return;
+			}
+
+			var hierarchy = imageDataBase.getHierarchy();
+
+			Project<BufferedImage> project = qupath.getProject();
+			ProjectImageEntry<BufferedImage> selectedEntry = project.getEntry(imageDataSelected);
+			var otherHierarchy = imageDataSelected.getHierarchy(); //selectedEntry.readImageData().getHierarchy(); //readHierarchy();
+
+			for (var pathObject : otherHierarchy.getAnnotationObjects() ) {
+				logger.info("Destination: "+pathObject.getName());
+			}
+
+			//these are the annotations in the source
+			logger.info("Importing from "+imageDataBase.getServer().getPath());
+			//logger.info("Destination to "+selectedEntry.getImageName());
+
+			List<PathObject> newObjects = new ArrayList<>();
+			for (var pathObject : hierarchy.getAnnotationObjects() ) {
+				logger.info("Importing: "+pathObject.getName());
+				//Transform ROI (via conversion to Java AWT shape)
+				newObjects.add(overlay.transformObject(pathObject));
+
+				//otherHierarchy.addPathObject(pathObject);
+				//otherHierarchy.addPathObject(newObject);
+			}
+			if (otherHierarchy != null) {
+				logger.info("Adding objects!");
+				otherHierarchy.addPathObjects(newObjects);
+				try {
+					selectedEntry.saveImageData(imageDataSelected);
+				} catch (IOException e1) {
+					logger.error("Error saving hieararchy! "+ e1.getLocalizedMessage(), e1);
+				}
+			}
+
+			for (var pathObject : otherHierarchy.getAnnotationObjects() ) {
+				logger.info("Destination: "+pathObject.getName());
+			}
+
+
+			/*
+			for (var pathObject : otherHierarchy.getAnnotationObjects() ) {
+				logger.info("Destination: "+pathObject.getName());
+			}
+			*/
+			logger.info("Importing done!");
+		});
+
 		btnReset.disableProperty().bind(noOverlay);
 		btnReset.setTooltip(new Tooltip("Reset the transform"));
 		btnInvert.disableProperty().bind(noOverlay);
@@ -414,8 +486,10 @@ public class ImageAlignmentPane {
 		btnUpdate.setTooltip(new Tooltip("Update the transform using the current text"));
 		btnCopy.disableProperty().bind(noOverlay);
 		btnCopy.setTooltip(new Tooltip("Copy the current transform to clipboard"));
+		btnImport.disableProperty().bind(noOverlay);
+		btnImport.setTooltip(new Tooltip("Propagate annotations from base image to selected"));
 		textArea.editableProperty().bind(noOverlay.not());
-		paneTransform.add(PaneTools.createColumnGridControls(btnUpdate, btnInvert, btnReset, btnCopy), 0, row++);
+		paneTransform.add(PaneTools.createColumnGridControls(btnUpdate, btnInvert, btnReset, btnCopy, btnImport), 0, row++);
 		PaneTools.setFillWidth(Boolean.TRUE, paneTransform.getChildren().toArray(Node[]::new));
 		PaneTools.setHGrowPriority(Priority.ALWAYS, paneTransform.getChildren().toArray(Node[]::new));
 		paneTransform.setVgap(5.0);
