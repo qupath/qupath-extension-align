@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
 import java.util.stream.Collectors;
@@ -52,6 +53,7 @@ import org.bytedeco.opencv.global.opencv_video;
 import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.Indexer;
 import org.controlsfx.control.CheckListView;
+import org.controlsfx.control.ListSelectionView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +66,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
@@ -119,6 +122,7 @@ import qupath.lib.projects.ProjectImageEntry;
 import qupath.lib.regions.RegionRequest;
 import qupath.lib.roi.GeometryTools;
 import qupath.opencv.tools.OpenCVTools;
+import javafx.scene.image.ImageView;
 
 
 /**
@@ -141,6 +145,7 @@ public class ImageAlignmentPane {
 	private DoubleProperty rotationIncrement = new SimpleDoubleProperty(1.0);
 		
 	private StringProperty affineStringProperty;
+	private StringProperty filterText = new SimpleStringProperty();
 	
 	private static enum RegistrationType {
 		AFFINE, RIGID;
@@ -207,6 +212,7 @@ public class ImageAlignmentPane {
 		this.viewer = qupath.getViewer();
 		
 		this.viewer.getView().addEventFilter(MouseEvent.ANY, mouseEventHandler);
+		filterText.set("");
 		
 		// Create left-hand pane for list
 		CheckListView<ImageData<BufferedImage>> listImages = new CheckListView<>(images);
@@ -517,38 +523,97 @@ public class ImageAlignmentPane {
 				images.stream().map(i -> project.getEntry(i)).collect(Collectors.toSet());
 		if (currentEntry != null)
 			alreadySelected.remove(currentEntry);
-		
+
+		entries.removeAll(alreadySelected);
+				
 		// Create a list to display, with the appropriate selections
-		ListView<ProjectImageEntry<BufferedImage>>  list = new ListView<>();
-		list.getItems().setAll(entries);
-		list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		ListSelectionView<ProjectImageEntry<BufferedImage>>  list = new ListSelectionView<>();
+		list.getSourceItems().setAll(entries);
+
+		//list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		/*
 		for (int i = 0; i < entries.size(); i++) {
 			if (alreadySelected.contains(entries.get(i)))
 				list.getSelectionModel().select(i);
 		}
+		*/
+		list.setCellFactory(c -> new ProjectEntryListCell());
+
+		// Add a filter text field
+		TextField tfFilter = new TextField();
+		tfFilter.textProperty().bindBidirectional(filterText);
+		filterText.addListener((v, o, n) -> updateImageList(list, entries, alreadySelected, n));
+
+		if (tfFilter.getText() != "")
+			updateImageList(list, entries, alreadySelected, tfFilter.getText());
+
+		//tfFilter.textProperty().addListener((v, o, n) -> updateImageList(list, entries, alreadySelected, n));
 		
 		Dialog<ButtonType> dialog = new Dialog<>();
 		dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 		dialog.setHeaderText("Select images to include");
 		dialog.getDialogPane().setContent(list);
+
+		tfFilter.setMaxWidth(Double.MAX_VALUE);
+		list.setSourceFooter(tfFilter);
+
+		// Set now, so that the label will be triggered if needed
+		if (alreadySelected != null && !alreadySelected.isEmpty()) {
+			list.getSourceItems().removeAll(alreadySelected);
+			list.getTargetItems().addAll(alreadySelected);
+		}
+
 		Optional<ButtonType> result = dialog.showAndWait();
 		
 		if (result.orElse(ButtonType.CANCEL) == ButtonType.CANCEL)
 			return;
 		
 		// We now need to add some & remove some (potentially)
-		Set<ProjectImageEntry<BufferedImage>> toSelect = new LinkedHashSet<>(list.getSelectionModel().getSelectedItems());
+		Set<ProjectImageEntry<BufferedImage>> toSelect = new LinkedHashSet<>(getTargetItems(list));
 		Set<ProjectImageEntry<BufferedImage>> toRemove = new HashSet<>(alreadySelected);
+
+		/*
+		logger.info("Before clean-up...");
+		for (ProjectImageEntry<BufferedImage> entry : toRemove) {
+			logger.info("alreadySelected: "+entry.toString());
+		}
+		for (ProjectImageEntry<BufferedImage> entry : toSelect) {
+			logger.info("toSelect: "+entry.toString());
+		}
+		for (ProjectImageEntry<BufferedImage> entry : getSourceItems((list))) {
+			logger.info("toRemove: "+entry.toString());
+		}
+		*/
+
+		toRemove.remove(currentEntry);
 		toRemove.removeAll(toSelect);
 		toSelect.removeAll(alreadySelected);
-		
+
+		/*
+		logger.info("After clean-up...");
+		for (ProjectImageEntry<BufferedImage> entry : toSelect) {
+			logger.info("toSelect: "+entry.toString());
+		}
+		for (ProjectImageEntry<BufferedImage> entry : toRemove) {
+			logger.info("toRemove (without source items): "+entry.toString());
+		}
+		*/
+
 		// Rather convoluted... but remove anything that needs to go, from the list, map & overlay
 		if (!toRemove.isEmpty()) {
 			List<ImageData<BufferedImage>> imagesToRemove = new ArrayList<>();
-			for (ImageData<BufferedImage> temp : images) {
-				for (ProjectImageEntry<BufferedImage> entry : toRemove) {
-					if (entry == currentEntry)
-						imagesToRemove.add(temp);
+			ImageData<BufferedImage> imageData = null;
+			for (ProjectImageEntry<BufferedImage> entry : toRemove) {
+				try {
+					imageData = entry.readImageData();
+					for (ImageData<BufferedImage> temp : images) {
+						if (temp.getServerPath().equals(imageData.getServerPath())) {
+							imagesToRemove.add(temp);
+						}
+					}
+				} catch (IOException e) {
+					logger.error("Unable to read ImageData for " + entry.getImageName(), e);
+					continue;
 				}
 			}
 			images.removeAll(imagesToRemove);
@@ -1018,5 +1083,123 @@ public class ImageAlignmentPane {
 		
 		
 	}
+
+	private static class ProjectEntryListCell extends ListCell<ProjectImageEntry<BufferedImage>> {
+		
+		private Tooltip tooltip = new Tooltip();
+		private ImageView imageView = new ImageView();
 	
+		private ProjectEntryListCell() {
+			super();
+			imageView.setFitWidth(250);
+			imageView.setFitHeight(250);
+			imageView.setPreserveRatio(true);
+		}
+	
+		@Override
+		protected void updateItem(ProjectImageEntry<BufferedImage> item, boolean empty) {
+			super.updateItem(item, empty);
+			if (item == null || empty) {
+				setText(null);
+				setGraphic(null);
+				setTooltip(null);
+				return;
+			}
+			setText(item.getImageName());
+			
+			Node tooltipGraphic = null;
+			BufferedImage img = null;
+			try {
+				img = (BufferedImage)item.getThumbnail();
+				if (img != null) {
+					imageView.setImage(SwingFXUtils.toFXImage(img, null));
+					tooltipGraphic = imageView;
+				}
+			} catch (Exception e) {
+				logger.debug("Unable to read thumbnail for {} ({})" + item.getImageName(), e.getLocalizedMessage());
+			}
+			tooltip.setText(item.getSummary());
+			if (tooltipGraphic != null)
+				tooltip.setGraphic(tooltipGraphic);
+			else
+				tooltip.setGraphic(null);
+			setTooltip(tooltip);
+		}
+	}	
+
+	/**
+	 * We should just be able to call {@link ListSelectionView#getTargetItems()}, but in ControlsFX 11 there 
+	 * is a bug that prevents this being correctly bound.
+	 * @param <T>
+	 * @param listSelectionView
+	 * @return target items
+	 */
+	public static <T> ObservableList<T> getTargetItems(ListSelectionView<T> listSelectionView) {
+		var skin = listSelectionView.getSkin();
+		if (skin == null) {
+			return listSelectionView.getTargetItems();
+		}
+
+		try {
+			logger.debug("Attempting to access target list by reflection (required for controls-fx 11.0.0)");
+			var method = skin.getClass().getMethod("getTargetListView");
+			@SuppressWarnings("unchecked")
+			var view = (ListView<T>)method.invoke(skin);
+			return view.getItems();
+		} catch (Exception e) {
+			logger.warn("Unable to access target list by reflection, sorry", e);
+			return listSelectionView.getTargetItems();
+		}
+	}
+
+	/**
+	 * We should just be able to call {@link ListSelectionView#getSourceItems()}, but in ControlsFX 11 there 
+	 * is a bug that prevents this being correctly bound.
+	 * @param <T>
+	 * @param listSelectionView
+	 * @return source items
+	 */
+	public static <T> ObservableList<T> getSourceItems(ListSelectionView<T> listSelectionView) {
+		var skin = listSelectionView.getSkin();
+		if (skin == null) {
+			return listSelectionView.getSourceItems();
+		}
+
+		try {
+			logger.debug("Attempting to access target list by reflection (required for controls-fx 11.0.0)");
+			var method = skin.getClass().getMethod("getSourceListView");
+			@SuppressWarnings("unchecked")
+			var view = (ListView<T>)method.invoke(skin);
+			return view.getItems();
+		} catch (Exception e) {
+			logger.warn("Unable to access target list by reflection, sorry", e);
+			return listSelectionView.getSourceItems();
+		}
+	}
+	
+	private static void updateImageList(final ListSelectionView<ProjectImageEntry<BufferedImage>> listSelectionView, 
+			final List<ProjectImageEntry<BufferedImage>> availableImages,
+			final Set<ProjectImageEntry<BufferedImage>> alreadySelected,
+			final String filterText) {
+		String text = filterText.trim().toLowerCase();
+		
+		// Get an update source items list
+		List<ProjectImageEntry<BufferedImage>> sourceItems = new ArrayList<>(availableImages);
+
+		//var targetItems = listImages.getItems();
+		//sourceItems.removeAll(targetItems);
+
+		// Apply filter text
+		if (text.length() > 0 && !sourceItems.isEmpty()) {
+			Iterator<ProjectImageEntry<BufferedImage>> iter = sourceItems.iterator();
+			while (iter.hasNext()) {
+				if (!iter.next().getImageName().toLowerCase().contains(text))
+					iter.remove();
+			}
+		}		
+		
+		if (getSourceItems(listSelectionView).equals(sourceItems))
+			return;
+		getSourceItems(listSelectionView).setAll(sourceItems);
+	}
 }
