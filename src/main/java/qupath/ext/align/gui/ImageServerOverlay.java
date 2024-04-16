@@ -25,6 +25,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,14 +43,20 @@ import qupath.lib.images.servers.ImageServer;
 import qupath.lib.regions.ImageRegion;
 
 import qupath.lib.roi.RoiTools;
+import qupath.lib.roi.PointsROI;
+import qupath.lib.roi.ROIs;
 import qupath.lib.objects.PathObject;
 import qupath.lib.objects.PathObjects;
 import qupath.lib.roi.interfaces.ROI;
 
+
 import qupath.lib.objects.PathTileObject;
 import qupath.lib.objects.PathCellObject;
 import qupath.lib.objects.PathDetectionObject;
-
+import java.util.List;
+import java.util.Arrays;
+import java.util.ArrayList;
+import qupath.lib.geom.Point2;
 
 /**
  * A {@link PathOverlay} implementation capable of painting one image on top of another, 
@@ -205,10 +212,34 @@ public class ImageServerOverlay extends AbstractOverlay {
 	 * @return
 	 */
 	private ROI transformROI(ROI roi, AffineTransform transform) {
-		var shape = RoiTools.getShape(roi); // Should be able to use roi.getShape() - but there's currently a bug in it for rectangles/ellipses!
-		var shape2 = transform.createTransformedShape(shape);
-		var roi2 = RoiTools.getShapeROI(shape2, roi.getImagePlane(), 0.5);
-		return roi2;
+		if (roi.getRoiType() == ROI.RoiType.POINT) {
+			List<Point2> points = roi.getAllPoints();
+			var nPoints = points.size();
+
+			// Convert List<Point2> to Point2D[]
+			Point2D[] pointsArray = points.stream()
+                              .map(point -> new Point2D.Double(point.getX(), point.getY()))
+                              .toArray(Point2D[]::new);
+
+			Point2D[] points2 = new Point2D[nPoints];
+			transform.transform(pointsArray,0,points2,0,nPoints);
+
+			// Create a list to store Point2 objects
+			List<Point2> pointsList = new ArrayList<>(nPoints);
+
+			// Add Point2 objects to the list
+			for (int i = 0; i < nPoints; i++) {
+				Point2D point = points2[i];
+				// Create a new Point2 object and add it to the list
+				pointsList.add(new Point2(point.getX(), point.getY()));
+			}
+			return ROIs.createPointsROI(pointsList, roi.getImagePlane());
+		} else {
+			var shape = RoiTools.getShape(roi); // Should be able to use roi.getShape() - but there's currently a bug in it for rectangles/ellipses!
+			var shape2 = transform.createTransformedShape(shape);
+			var roi2 = RoiTools.getShapeROI(shape2, roi.getImagePlane(), 0.5);
+			return roi2;
+		}
 	}
 }
 	
