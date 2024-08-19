@@ -61,13 +61,31 @@ public class ImageServerOverlay extends AbstractOverlay {
 	private AffineTransform transform;
 	private AffineTransform transformInverse;
 	
+    	/**
+     	* Helper method to calculate the Affine transformation based on pixel sizes.
+     	*/
+    	private static Affine calculateAffine(QuPathViewer viewer, ImageServer<BufferedImage> server) {
+            // Access the PixelCalibration from the viewer
+            PixelCalibration viewerCalibration = viewer.getImageData().getServer().getPixelCalibration();
+
+            // Access the PixelCalibration from the server
+            PixelCalibration serverCalibration = server.getPixelCalibration();
+
+            // Calculate the a and y scaling factor
+            double mxx = viewerCalibration.getPixelWidthMicrons() / serverCalibration.getPixelWidthMicrons();
+            double myy = viewerCalibration.getPixelHeightMicrons() / serverCalibration.getPixelHeightMicrons();
+
+            // Create and return the Affine object
+            return new Affine(mxx, 0, 0, 0, myy, 0);
+        }
+	
 	/**
 	 * Constructor.
 	 * @param viewer viewer to which the overlay should be added
 	 * @param server ImageServer that should be displayed on the overlay
 	 */
 	public ImageServerOverlay(final QuPathViewer viewer, final ImageServer<BufferedImage> server) {
-		this(viewer, server, new Affine());
+		this(viewer, server, calculateAffine(viewer, server));
 	}
 	
 	/**
