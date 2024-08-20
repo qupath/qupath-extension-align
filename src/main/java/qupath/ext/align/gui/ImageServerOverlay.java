@@ -40,6 +40,7 @@ import qupath.lib.gui.viewer.overlays.AbstractOverlay;
 import qupath.lib.gui.viewer.overlays.PathOverlay;
 import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
+import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.regions.ImageRegion;
 
 import qupath.lib.roi.RoiTools;
@@ -77,24 +78,9 @@ public class ImageServerOverlay extends AbstractOverlay {
 	
 	private AffineTransform transform;
 	private AffineTransform transformInverse;
-	
-    	/**
-     	* Helper method to calculate the Affine transformation based on pixel sizes.
-     	*/
-    	private static Affine calculateAffine(QuPathViewer viewer, ImageServer<BufferedImage> server) {
-            // Access the PixelCalibration from the viewer
-            PixelCalibration viewerCalibration = viewer.getImageData().getServer().getPixelCalibration();
 
-            // Access the PixelCalibration from the server
-            PixelCalibration serverCalibration = server.getPixelCalibration();
-
-            // Calculate the a and y scaling factor
-            double mxx = viewerCalibration.getPixelWidthMicrons() / serverCalibration.getPixelWidthMicrons();
-            double myy = viewerCalibration.getPixelHeightMicrons() / serverCalibration.getPixelHeightMicrons();
-
-            // Create and return the Affine object
-            return new Affine(mxx, 0, 0, 0, myy, 0);
-        }
+	private PixelCalibration viewerCalibration;
+	private PixelCalibration serverCalibration;
 	
 	/**
 	 * Constructor.
@@ -102,7 +88,7 @@ public class ImageServerOverlay extends AbstractOverlay {
 	 * @param server ImageServer that should be displayed on the overlay
 	 */
 	public ImageServerOverlay(final QuPathViewer viewer, final ImageServer<BufferedImage> server) {
-		this(viewer, server, calculateAffine(viewer, server));
+		this(viewer, server, new Affine());
 	}
 	
 	/**
@@ -117,8 +103,15 @@ public class ImageServerOverlay extends AbstractOverlay {
 		this.server = server;
 		this.transform = new AffineTransform();
 		this.transformInverse = null;//transform.createInverse();
-		// Request repaint any time the transform changes
+		
 		this.affine = affine;
+		// Access the PixelCalibration from the viewer and server and
+		// reset the affine transform to a scaled identity
+		this.viewerCalibration = viewer.getImageData().getServer().getPixelCalibration();
+		this.serverCalibration = server.getPixelCalibration();
+		resetAffine();
+		
+		// Request repaint any time the transform changes
 		this.affine.addEventHandler(TransformChangedEvent.ANY, e ->  {
 			updateTransform();
 			viewer.repaintEntireImage();
@@ -160,6 +153,21 @@ public class ImageServerOverlay extends AbstractOverlay {
 		return transform;
 	}
 
+
+	/**
+	 * Reset the affine transform to its pixel-correct scaled identity
+	 */
+	public void resetAffine() {
+		if (this.affine == null)
+			return;
+
+        // Calculate the a and y scaling factor
+        double mxx = this.viewerCalibration.getPixelWidthMicrons() / serverCalibration.getPixelWidthMicrons();
+        double myy = this.viewerCalibration.getPixelHeightMicrons() / serverCalibration.getPixelHeightMicrons();
+
+		this.affine.setToTransform(mxx, 0, 0, 0, myy, 0);
+	}
+	
 	private void updateTransform() {
 		transform.setTransform(
 			affine.getMxx(),
