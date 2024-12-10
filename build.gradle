@@ -28,9 +28,10 @@ base {
     group = "io.github.qupath"
 }
 ext.qupathVersion = gradle.ext.qupathVersion
-ext.qupathJavaVersion = 17
+ext.qupathJavaVersion = libs.versions.jdk.get() as Integer
 
 dependencies {
+    implementation libs.qupath.fxtras
     shadow "io.github.qupath:qupath-gui-fx:${qupathVersion}"
     shadow "org.slf4j:slf4j-api:1.7.30"
 }
@@ -53,4 +54,8 @@ java {
     }
     withSourcesJar()
     withJavadocJar()
+}
+
+javafx {
+    modules = ["javafx.base", "javafx.swing", "javafx.controls", "javafx.graphics"]
 }

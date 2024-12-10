@@ -82,7 +82,6 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
@@ -102,9 +101,9 @@ import javafx.scene.transform.MatrixType;
 import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.scene.transform.TransformChangedEvent;
 import javafx.stage.Stage;
+import qupath.fx.dialogs.Dialogs;
 import qupath.lib.geom.Point2;
 import qupath.lib.gui.QuPathGUI;
-import qupath.lib.gui.dialogs.Dialogs;
 import qupath.lib.gui.images.stores.ImageRenderer;
 import qupath.lib.gui.tools.GuiTools;
 import qupath.lib.gui.tools.PaneTools;
@@ -135,17 +134,17 @@ import javafx.scene.image.ImageView;
  */
 public class ImageAlignmentPane {
 	
-	private static Logger logger = LoggerFactory.getLogger(ImageAlignmentPane.class);
+	private static final Logger logger = LoggerFactory.getLogger(ImageAlignmentPane.class);
 	
-	private QuPathGUI qupath;
-	private QuPathViewer viewer;
+	private final QuPathGUI qupath;
+	private final QuPathViewer viewer;
 	
-	private ObservableList<ImageData<BufferedImage>> images = FXCollections.observableArrayList();
-	private ObjectProperty<ImageData<BufferedImage>> selectedImageData = new SimpleObjectProperty<>();
-	private DoubleProperty rotationIncrement = new SimpleDoubleProperty(1.0);
+	private final ObservableList<ImageData<BufferedImage>> images = FXCollections.observableArrayList();
+	private final ObjectProperty<ImageData<BufferedImage>> selectedImageData = new SimpleObjectProperty<>();
+	private final DoubleProperty rotationIncrement = new SimpleDoubleProperty(1.0);
 		
-	private StringProperty affineStringProperty;
-	private StringProperty filterText = new SimpleStringProperty();
+	private final StringProperty affineStringProperty;
+	private final StringProperty filterText = new SimpleStringProperty();
 	
 	private static enum RegistrationType {
 		AFFINE, RIGID;
@@ -162,7 +161,7 @@ public class ImageAlignmentPane {
 		}
 	}
 	
-	private ObjectProperty<RegistrationType> registrationType = new SimpleObjectProperty<>(RegistrationType.AFFINE);
+	private final ObjectProperty<RegistrationType> registrationType = new SimpleObjectProperty<>(RegistrationType.AFFINE);
 	
 	private static enum AlignmentMethod {
 			INTENSITY, AREA_ANNOTATIONS, POINT_ANNOTATIONS;
@@ -181,22 +180,15 @@ public class ImageAlignmentPane {
 		}
 	}
 	
-	private ObjectProperty<AlignmentMethod> alignmentMethod = new SimpleObjectProperty<>(AlignmentMethod.INTENSITY);
+	private final ObjectProperty<AlignmentMethod> alignmentMethod = new SimpleObjectProperty<>(AlignmentMethod.INTENSITY);
 
-	private Map<ImageData<BufferedImage>, ImageServerOverlay> mapOverlays = new WeakHashMap<>();
-	private EventHandler<TransformChangedEvent> transformEventHandler = new EventHandler<TransformChangedEvent>() {
-		@Override
-		public void handle(TransformChangedEvent event) {
-			affineTransformUpdated();
-		}
-	};
+	private final Map<ImageData<BufferedImage>, ImageServerOverlay> mapOverlays = new WeakHashMap<>();
+	private final EventHandler<TransformChangedEvent> transformEventHandler = event -> affineTransformUpdated();
 	
-	private RefineTransformMouseHandler mouseEventHandler = new RefineTransformMouseHandler();
+	private final RefineTransformMouseHandler mouseEventHandler = new RefineTransformMouseHandler();
 	
-	private ObjectBinding<ImageServerOverlay> selectedOverlay = Bindings.createObjectBinding(
-			() -> {
-				return mapOverlays.get(selectedImageData.get());
-			},
+	private final ObjectBinding<ImageServerOverlay> selectedOverlay = Bindings.createObjectBinding(
+			() -> mapOverlays.get(selectedImageData.get()),
 			selectedImageData);
 	
 	private BooleanBinding noOverlay = selectedOverlay.isNull();
@@ -260,7 +252,7 @@ public class ImageAlignmentPane {
 			if (!n.isEmpty()) {
 				try {
 					rotationIncrement.set(Double.parseDouble(n));
-				} catch (Exception e) {}
+				} catch (Exception ignored) {}
 			}
 		});
 		Label labelRotationIncrement = new Label("Rotation increment: ");
@@ -520,23 +512,18 @@ public class ImageAlignmentPane {
 		
 		// Find the entries currently selected
 		Set<ProjectImageEntry<BufferedImage>> alreadySelected = 
-				images.stream().map(i -> project.getEntry(i)).collect(Collectors.toSet());
+				images.stream()
+						.map(project::getEntry)
+						.collect(Collectors.toSet());
 		if (currentEntry != null)
 			alreadySelected.remove(currentEntry);
 
 		entries.removeAll(alreadySelected);
-				
+
 		// Create a list to display, with the appropriate selections
 		ListSelectionView<ProjectImageEntry<BufferedImage>>  list = new ListSelectionView<>();
 		list.getSourceItems().setAll(entries);
 
-		//list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		/*
-		for (int i = 0; i < entries.size(); i++) {
-			if (alreadySelected.contains(entries.get(i)))
-				list.getSelectionModel().select(i);
-		}
-		*/
 		list.setCellFactory(c -> new ProjectEntryListCell());
 
 		// Add a filter text field
@@ -544,11 +531,9 @@ public class ImageAlignmentPane {
 		tfFilter.textProperty().bindBidirectional(filterText);
 		filterText.addListener((v, o, n) -> updateImageList(list, entries, alreadySelected, n));
 
-		if (tfFilter.getText() != "")
+		if (!tfFilter.getText().isEmpty())
 			updateImageList(list, entries, alreadySelected, tfFilter.getText());
 
-		//tfFilter.textProperty().addListener((v, o, n) -> updateImageList(list, entries, alreadySelected, n));
-		
 		Dialog<ButtonType> dialog = new Dialog<>();
 		dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 		dialog.setHeaderText("Select images to include");
@@ -558,7 +543,7 @@ public class ImageAlignmentPane {
 		list.setSourceFooter(tfFilter);
 
 		// Set now, so that the label will be triggered if needed
-		if (alreadySelected != null && !alreadySelected.isEmpty()) {
+		if (!alreadySelected.isEmpty()) {
 			list.getSourceItems().removeAll(alreadySelected);
 			list.getTargetItems().addAll(alreadySelected);
 		}
@@ -569,53 +554,23 @@ public class ImageAlignmentPane {
 			return;
 		
 		// We now need to add some & remove some (potentially)
-		Set<ProjectImageEntry<BufferedImage>> toSelect = new LinkedHashSet<>(getTargetItems(list));
+		Set<ProjectImageEntry<BufferedImage>> toSelect = new LinkedHashSet<>(list.getTargetItems());
 		Set<ProjectImageEntry<BufferedImage>> toRemove = new HashSet<>(alreadySelected);
-
-		/*
-		logger.info("Before clean-up...");
-		for (ProjectImageEntry<BufferedImage> entry : toRemove) {
-			logger.info("alreadySelected: "+entry.toString());
-		}
-		for (ProjectImageEntry<BufferedImage> entry : toSelect) {
-			logger.info("toSelect: "+entry.toString());
-		}
-		for (ProjectImageEntry<BufferedImage> entry : getSourceItems((list))) {
-			logger.info("toRemove: "+entry.toString());
-		}
-		*/
 
 		toRemove.remove(currentEntry);
 		toRemove.removeAll(toSelect);
 		toSelect.removeAll(alreadySelected);
 
-		/*
-		logger.info("After clean-up...");
-		for (ProjectImageEntry<BufferedImage> entry : toSelect) {
-			logger.info("toSelect: "+entry.toString());
-		}
-		for (ProjectImageEntry<BufferedImage> entry : toRemove) {
-			logger.info("toRemove (without source items): "+entry.toString());
-		}
-		*/
-
 		// Rather convoluted... but remove anything that needs to go, from the list, map & overlay
 		if (!toRemove.isEmpty()) {
 			List<ImageData<BufferedImage>> imagesToRemove = new ArrayList<>();
-			ImageData<BufferedImage> imageData = null;
 			for (ProjectImageEntry<BufferedImage> entry : toRemove) {
-				try {
-					imageData = entry.readImageData();
-					for (ImageData<BufferedImage> temp : images) {
-						if (temp.getServerPath().equals(imageData.getServerPath())) {
-							imagesToRemove.add(temp);
-						}
+				for (ImageData<BufferedImage> temp : images) {
+					if (entry == currentEntry) {
+						imagesToRemove.add(temp);
 					}
-				} catch (IOException e) {
-					logger.error("Unable to read ImageData for " + entry.getImageName(), e);
-					continue;
 				}
-			}
+            }
 			images.removeAll(imagesToRemove);
 			for (ImageData<BufferedImage> temp : imagesToRemove) {
 				ImageServerOverlay overlay = mapOverlays.remove(temp);
@@ -635,7 +590,6 @@ public class ImageAlignmentPane {
 			// Read annotations from any data file
 			try {
 				// Try to get data from an open viewer first, if possible
-
 				for (var viewer : qupath.getAllViewers()) {
 					var tempData = viewer.getImageData();
 					if (tempData != null && temp.equals(project.getEntry(viewer.getImageData()))) {
@@ -663,16 +617,13 @@ public class ImageAlignmentPane {
 				continue;
 			}
 			ImageServerOverlay overlay = new ImageServerOverlay(viewer, imageData.getServer());
-			//@phaub Support of viewer display settings
 			overlay.setRenderer(renderer);
 			
 			overlay.getAffine().addEventHandler(TransformChangedEvent.ANY, transformEventHandler);
 			mapOverlays.put(imageData, overlay);
-//			viewer.getCustomOverlayLayers().add(overlay);
 			imagesToAdd.add(imageData);
 		}
 		images.addAll(0, imagesToAdd);
-		
 	}
 	
 	
@@ -698,15 +649,12 @@ public class ImageAlignmentPane {
 		Affine affine = overlay.getAffine();
 		affineStringProperty.set(
 				String.format(
-				"%.4f, \t %.4f,\t %.4f,\n" + 
-				"%.4f,\t %.4f,\t %.4f",
-//				String.format("Transform: [\n" +
-//				"  %.3f, %.3f, %.3f,\n" + 
-//				"  %.3f, %.3f, %.3f\n" + 
-//				"]",
-				affine.getMxx(), affine.getMxy(), affine.getTx(),
-				affine.getMyx(), affine.getMyy(), affine.getTy())
-				);
+					"%.4f, \t %.4f,\t %.4f,\n" +
+					"%.4f,\t %.4f,\t %.4f",
+					affine.getMxx(), affine.getMxy(), affine.getTx(),
+					affine.getMyx(), affine.getMyy(), affine.getTy()
+				)
+		);
 	}
 	
 	
@@ -737,14 +685,14 @@ public class ImageAlignmentPane {
 	/**
 	 * Auto-align the selected image overlay with the base image in the viewer.
 	 * 
-	 * @param requestedPixelSizeMicrons
+	 * @param requestedPixelSizeMicrons The requested pixel size in microns.
 	 * @throws IOException 
 	 */
 	void autoAlign(double requestedPixelSizeMicrons) throws IOException {
 		ImageData<BufferedImage> imageDataBase = viewer.getImageData();
 		ImageData<BufferedImage> imageDataSelected = selectedImageData.get();
 		if (imageDataBase == null) {
-			Dialogs.showNoImageError("Auto-alignment");
+			Dialogs.showErrorMessage("Auto-alignment", "No image is available!");
 			return;
 		}
 		if (imageDataSelected == null) {
@@ -789,12 +737,10 @@ public class ImageAlignmentPane {
 			}
 			Mat matBase = pointsToMat(pointsBase);
 			Mat matSelected = pointsToMat(pointsSelected);
-			
+
+			// @deprecated Use cv::estimateAffine2D, cv::estimateAffinePartial2D instead. If you are using this function
+			// with images, extract points using cv::calcOpticalFlowPyrLK and then use the estimation functions.
 			transform = opencv_video.estimateRigidTransform(matBase, matSelected, registrationType.get() == RegistrationType.AFFINE);
-//			if (registrationType.get() == RegistrationType.AFFINE)
-//				transform = opencv_calib3d.estimateAffine2D(matBase, matSelected);
-//			else
-//				transform = opencv_calib3d.estimateAffinePartial2D(matBase, matSelected);
 			matToAffine(transform, affine, 1.0);
 			return;
 		}
@@ -803,7 +749,7 @@ public class ImageAlignmentPane {
 			logger.debug("Image alignment using area annotations");
 			Map<PathClass, Integer> labels = new LinkedHashMap<>();
 			int label = 1;
-			labels.put(PathClassFactory.getPathClassUnclassified(), label++);
+			labels.put(PathClass.NULL_CLASS, label++);
 			for (var annotation : imageDataBase.getHierarchy().getAnnotationObjects()) {
 				var pathClass = annotation.getPathClass();
 				if (pathClass != null && !labels.containsKey(pathClass))
@@ -866,17 +812,14 @@ public class ImageAlignmentPane {
 			downsample = requestedPixelSizeMicrons / calBase.getAveragedPixelSizeMicrons();			
 		}
 
-		BufferedImage imgBase = serverBase.readBufferedImage(RegionRequest.createInstance(serverBase.getPath(), downsample, 0, 0, serverBase.getWidth(), serverBase.getHeight()));
-		BufferedImage imgOverlay = serverOverlay.readBufferedImage(RegionRequest.createInstance(serverOverlay.getPath(), downsample, 0, 0, serverOverlay.getWidth(), serverOverlay.getHeight()));
+		BufferedImage imgBase = serverBase.readRegion(RegionRequest.createInstance(serverBase.getPath(), downsample, 0, 0, serverBase.getWidth(), serverBase.getHeight()));
+		BufferedImage imgOverlay = serverOverlay.readRegion(RegionRequest.createInstance(serverOverlay.getPath(), downsample, 0, 0, serverOverlay.getWidth(), serverOverlay.getHeight()));
 		
 		imgBase = ensureGrayScale(imgBase);
 		imgOverlay = ensureGrayScale(imgOverlay);
 		
 		Mat matBase = OpenCVTools.imageToMat(imgBase);
 		Mat matOverlay = OpenCVTools.imageToMat(imgOverlay);
-		
-//		opencv_imgproc.threshold(matBase, matBase, opencv_imgproc.THRESH_OTSU, 255, opencv_imgproc.THRESH_BINARY_INV + opencv_imgproc.THRESH_OTSU);
-//		opencv_imgproc.threshold(matOverlay, matOverlay, opencv_imgproc.THRESH_OTSU, 255, opencv_imgproc.THRESH_BINARY_INV + opencv_imgproc.THRESH_OTSU);
 
 		Mat matTransform = Mat.eye(2, 3, opencv_core.CV_32F).asMat();
 		// Initialize using existing transform
@@ -1012,8 +955,7 @@ public class ImageAlignmentPane {
 				
 			if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
 				pDragging = viewer.componentPointToImagePoint(event.getX(), event.getY(), pDragging, true);
-				return;
-			} else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
+            } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED) {
 				Point2D p = viewer.componentPointToImagePoint(event.getX(), event.getY(), null, true);
 				if (event.isShiftDown() && pDragging != null) {
 					double dx = p.getX() - pDragging.getX();
@@ -1185,9 +1127,6 @@ public class ImageAlignmentPane {
 		
 		// Get an update source items list
 		List<ProjectImageEntry<BufferedImage>> sourceItems = new ArrayList<>(availableImages);
-
-		//var targetItems = listImages.getItems();
-		//sourceItems.removeAll(targetItems);
 
 		// Apply filter text
 		if (text.length() > 0 && !sourceItems.isEmpty()) {
