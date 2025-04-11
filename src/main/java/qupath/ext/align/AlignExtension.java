@@ -39,13 +39,15 @@ public class AlignExtension implements QuPathExtension, GitHubProject {
 
 	public static class ExperimentalCommands {
 
-		@ActionConfig(value = "alignAction", bundle = "qupath/ext/align/strings")
 		@ActionMenu("Menu.Analyze>Alignment")
 		public final Action actionInteractiveAlignment;
 
 		private ExperimentalCommands(QuPathGUI qupath) {
 			var interactiveAlignment = new InteractiveImageAlignmentCommand(qupath);
 			actionInteractiveAlignment = qupath.createProjectAction(project -> interactiveAlignment.run());
+			actionInteractiveAlignment.setText("Interactive image alignment");
+			actionInteractiveAlignment.setLongText("Experimental command to interactively align images using an Affine transform. \n" +
+					"This is currently not terribly useful in itself, but may be helpful as part of more complex scripting workflows");
 		}
 		
 	}

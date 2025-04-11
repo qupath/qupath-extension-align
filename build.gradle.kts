@@ -4,7 +4,7 @@ plugins {
 
 qupathExtension {
 	name = "qupath-extension-align"
-	version = "0.5.0-SNAPSHOT"
+	version = "0.5.0"
 	group = "io.github.qupath"
 	description = "QuPath extension for interactive image alignment"
 	automaticModule = "qupath.extension.align"
