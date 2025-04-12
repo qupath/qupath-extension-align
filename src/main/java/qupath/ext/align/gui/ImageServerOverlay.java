@@ -27,6 +27,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,9 +104,9 @@ public class ImageServerOverlay extends AbstractOverlay {
 		this.server = server;
 		this.transform = new AffineTransform();
 		this.transformInverse = null;//transform.createInverse();
-		
+		// Request repaint any time the transform changes
 		this.affine = affine;
-		// Access the PixelCalibration from the viewer and server and
+		// Access the PixelCalibration from the current viewer and overlay server and
 		// reset the affine transform to a scaled identity
 		this.viewerImageCalibration = viewer.getImageData().getServer().getPixelCalibration();
 		this.overlayImageCalibration = server.getPixelCalibration();
