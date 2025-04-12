@@ -158,12 +158,18 @@ public class ImageServerOverlay extends AbstractOverlay {
 	 * Reset the affine transform to its pixel-correct scaled identity
 	 */
 	public void resetAffine() {
+		// The scaling factors's defaults
+		double mxx = 1;
+		double myy = 1;
+
 		if (this.affine == null)
 			return;
 
-        // Calculate the a and y scaling factor
-        double mxx = this.viewerImageCalibration.getPixelWidthMicrons() / overlayImageCalibration.getPixelWidthMicrons();
-        double myy = this.viewerImageCalibration.getPixelHeightMicrons() / overlayImageCalibration.getPixelHeightMicrons();
+        // Calculate the affine 'a' and 'y' scaling factor parameters - Defaults to 1 and 1 if no pixel size micron available.
+		if (this.viewerImageCalibration.hasPixelSizeMicrons() && this.overlayImageCalibration.hasPixelSizeMicrons()) {
+			mxx = this.viewerImageCalibration.getPixelWidthMicrons() / overlayImageCalibration.getPixelWidthMicrons();
+			myy = this.viewerImageCalibration.getPixelHeightMicrons() / overlayImageCalibration.getPixelHeightMicrons();
+		}
 
 		this.affine.setToTransform(mxx, 0, 0, 0, myy, 0);
 	}
