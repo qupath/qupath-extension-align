@@ -370,6 +370,8 @@ public class ImageAlignmentPane {
 		Button btnReset = new Button("Reset");
 		btnReset.setOnAction(e -> {
 			var overlay = getSelectedOverlay();
+			if (overlay == null)
+				return;
 			overlay.resetAffine();
 		});
 		Button btnInvert = new Button("Invert");
