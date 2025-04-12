@@ -79,8 +79,8 @@ public class ImageServerOverlay extends AbstractOverlay {
 	private AffineTransform transform;
 	private AffineTransform transformInverse;
 
-	private PixelCalibration viewerCalibration;
-	private PixelCalibration serverCalibration;
+	private PixelCalibration viewerImageCalibration;
+	private PixelCalibration overlayImageCalibration;
 	
 	/**
 	 * Constructor.
@@ -107,8 +107,8 @@ public class ImageServerOverlay extends AbstractOverlay {
 		this.affine = affine;
 		// Access the PixelCalibration from the viewer and server and
 		// reset the affine transform to a scaled identity
-		this.viewerCalibration = viewer.getImageData().getServer().getPixelCalibration();
-		this.serverCalibration = server.getPixelCalibration();
+		this.viewerImageCalibration = viewer.getImageData().getServer().getPixelCalibration();
+		this.overlayImageCalibration = server.getPixelCalibration();
 		resetAffine();
 		
 		// Request repaint any time the transform changes
@@ -162,8 +162,8 @@ public class ImageServerOverlay extends AbstractOverlay {
 			return;
 
         // Calculate the a and y scaling factor
-        double mxx = this.viewerCalibration.getPixelWidthMicrons() / serverCalibration.getPixelWidthMicrons();
-        double myy = this.viewerCalibration.getPixelHeightMicrons() / serverCalibration.getPixelHeightMicrons();
+        double mxx = this.viewerImageCalibration.getPixelWidthMicrons() / overlayImageCalibration.getPixelWidthMicrons();
+        double myy = this.viewerImageCalibration.getPixelHeightMicrons() / overlayImageCalibration.getPixelHeightMicrons();
 
 		this.affine.setToTransform(mxx, 0, 0, 0, myy, 0);
 	}
