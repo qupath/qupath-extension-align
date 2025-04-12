@@ -26,6 +26,7 @@ import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import qupath.lib.gui.viewer.overlays.AbstractOverlay;
 import qupath.lib.gui.viewer.overlays.PathOverlay;
 import qupath.lib.images.ImageData;
 import qupath.lib.images.servers.ImageServer;
+import qupath.lib.images.servers.PixelCalibration;
 import qupath.lib.regions.ImageRegion;
 
 /**
@@ -60,6 +62,9 @@ public class ImageServerOverlay extends AbstractOverlay {
 	
 	private AffineTransform transform;
 	private AffineTransform transformInverse;
+
+	private PixelCalibration viewerImageCalibration;
+	private PixelCalibration overlayImageCalibration;
 	
 	/**
 	 * Constructor.
@@ -84,6 +89,13 @@ public class ImageServerOverlay extends AbstractOverlay {
 		this.transformInverse = null;//transform.createInverse();
 		// Request repaint any time the transform changes
 		this.affine = affine;
+		// Access the PixelCalibration from the current viewer and overlay server and
+		// reset the affine transform to a scaled identity
+		this.viewerImageCalibration = viewer.getImageData().getServer().getPixelCalibration();
+		this.overlayImageCalibration = server.getPixelCalibration();
+		resetAffine();
+		
+		// Request repaint any time the transform changes
 		this.affine.addEventHandler(TransformChangedEvent.ANY, e ->  {
 			updateTransform();
 			viewer.repaintEntireImage();
@@ -115,7 +127,27 @@ public class ImageServerOverlay extends AbstractOverlay {
 	public Affine getAffine() {
 		return affine;
 	}
-	
+
+	/**
+	 * Reset the affine transform to its pixel-correct scaled identity
+	 */
+	public void resetAffine() {
+		// The scaling factors's defaults
+		double mxx = 1;
+		double myy = 1;
+
+		if (this.affine == null)
+			return;
+
+        // Calculate the affine 'a' and 'y' scaling factor parameters - Defaults to 1 and 1 if no pixel size micron available.
+		if (this.viewerImageCalibration.hasPixelSizeMicrons() && this.overlayImageCalibration.hasPixelSizeMicrons()) {
+			mxx = this.viewerImageCalibration.getPixelWidthMicrons() / overlayImageCalibration.getPixelWidthMicrons();
+			myy = this.viewerImageCalibration.getPixelHeightMicrons() / overlayImageCalibration.getPixelHeightMicrons();
+		}
+
+		this.affine.setToTransform(mxx, 0, 0, 0, myy, 0);
+	}
+		
 	private void updateTransform() {
 		transform.setTransform(
 			affine.getMxx(),
