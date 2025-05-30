@@ -14,6 +14,7 @@ dependencies {
 
 	implementation(libs.bundles.qupath)
 	implementation(libs.bundles.logging)
+	implementation(libs.qupath.fxtras)
 
 	// For testing
 	testImplementation(libs.junit)
