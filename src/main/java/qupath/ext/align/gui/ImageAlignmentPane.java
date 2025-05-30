@@ -409,7 +409,7 @@ public class ImageAlignmentPane {
 			ImageData<BufferedImage> imageDataBase = viewer.getImageData();
 			ImageData<BufferedImage> imageDataSelected = selectedImageData.get();
 			if (imageDataBase == null) {
-				Dialogs.showNoImageError("Auto-alignment");
+				Dialogs.showErrorMessage("Auto-alignment", "No image selected");
 				return;
 			}
 			if (imageDataSelected == null) {
@@ -454,7 +454,7 @@ public class ImageAlignmentPane {
 			}
 			if (otherHierarchy != null) {
 				logger.info("Adding objects!");
-				otherHierarchy.addPathObjects(newObjects);
+				otherHierarchy.addObjects(newObjects);
 				try {
 					selectedEntry.saveImageData(imageDataSelected);
 				} catch (IOException e1) {
