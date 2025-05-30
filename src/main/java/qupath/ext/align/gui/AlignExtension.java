@@ -19,14 +19,12 @@
  * #L%
  */
 
-package qupath.ext.align;
+package qupath.ext.align.gui;
 
 import org.controlsfx.control.action.Action;
 
-import qupath.ext.align.gui.InteractiveImageAlignmentCommand;
 import qupath.lib.common.Version;
 import qupath.lib.gui.actions.ActionTools;
-import qupath.lib.gui.actions.annotations.ActionConfig;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.actions.annotations.ActionMenu;
 import qupath.lib.gui.extensions.GitHubProject;

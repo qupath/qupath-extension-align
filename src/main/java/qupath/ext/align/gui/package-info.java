@@ -1,4 +1,4 @@
 /**
- * Classes to help with interactive image alignment in QuPath.
+ * An extension to help with interactive image alignment in QuPath.
  */
 package qupath.ext.align.gui;
