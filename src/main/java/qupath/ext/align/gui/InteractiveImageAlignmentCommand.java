@@ -2,7 +2,7 @@
  * #%L
  * This file is part of QuPath.
  * %%
- * Copyright (C) 2018 - 2023 QuPath developers, The University of Edinburgh
+ * Copyright (C) 2018 - 2025 QuPath developers, The University of Edinburgh
  * %%
  * QuPath is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -21,34 +21,40 @@
 
 package qupath.ext.align.gui;
 
+import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.QuPathGUI;
-import qupath.lib.gui.dialogs.Dialogs;
+
+import java.util.ResourceBundle;
 
 /**
  * Command to interactively adjust apply an affine transform to an image overlay.
  * 
  * @author Pete Bankhead
- *
  */
 public class InteractiveImageAlignmentCommand implements Runnable {
-	
-	private QuPathGUI qupath;
+
+	private static final ResourceBundle resources = Utils.getResources();
+	private final QuPathGUI qupath;
 	
 	/**
 	 * Constructor.
-	 * @param qupath
+	 *
+	 * @param qupath the QuPath GUI that should own this command
 	 */
-	public InteractiveImageAlignmentCommand(final QuPathGUI qupath) {
+	public InteractiveImageAlignmentCommand(QuPathGUI qupath) {
 		this.qupath = qupath;
 	}
 
 	@Override
 	public void run() {
 		if (qupath.getImageData() == null) {
-			Dialogs.showNoImageError("Interactive image alignment");
+			Dialogs.showErrorMessage(
+					resources.getString("InteractiveImageAlignmentCommand.interactiveImageAlignment"),
+					resources.getString("InteractiveImageAlignmentCommand.openImageFirst")
+			);
 			return;
 		}
+
 		new ImageAlignmentPane(qupath);
 	}
-
 }

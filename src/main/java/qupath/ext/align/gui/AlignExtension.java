@@ -2,7 +2,7 @@
  * #%L
  * This file is part of QuPath.
  * %%
- * Copyright (C) 2018 - 2023 QuPath developers, The University of Edinburgh
+ * Copyright (C) 2018 - 2025 QuPath developers, The University of Edinburgh
  * %%
  * QuPath is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as
@@ -23,58 +23,65 @@ package qupath.ext.align.gui;
 
 import org.controlsfx.control.action.Action;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.lib.common.Version;
 import qupath.lib.gui.actions.ActionTools;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.actions.annotations.ActionMenu;
-import qupath.lib.gui.extensions.GitHubProject;
 import qupath.lib.gui.extensions.QuPathExtension;
 
+import java.util.ResourceBundle;
+
 /**
- * Extension to make more experimental commands present in the GUI.
+ * Extension to interactively align images.
  */
-public class AlignExtension implements QuPathExtension, GitHubProject {
+public class AlignExtension implements QuPathExtension {
 
-	public static class ExperimentalCommands {
-
-		@ActionMenu("Menu.Analyze>Alignment")
-		public final Action actionInteractiveAlignment;
-
-		private ExperimentalCommands(QuPathGUI qupath) {
-			var interactiveAlignment = new InteractiveImageAlignmentCommand(qupath);
-			actionInteractiveAlignment = qupath.createProjectAction(project -> interactiveAlignment.run());
-			actionInteractiveAlignment.setText("Interactive image alignment");
-			actionInteractiveAlignment.setLongText("Experimental command to interactively align images using an Affine transform. \n" +
-					"This is currently not terribly useful in itself, but may be helpful as part of more complex scripting workflows");
-		}
-		
-	}
-	
+	private static final ResourceBundle resources = Utils.getResources();
+	private static final Logger logger = LoggerFactory.getLogger(AlignExtension.class);
+	private static final String EXTENSION_NAME = resources.getString("Extension.name");
+	private static final String EXTENSION_DESCRIPTION = resources.getString("Extension.description");
+	private static final Version EXTENSION_QUPATH_VERSION = Version.parse("v0.6.0");
+	private boolean isInstalled = false;
 	
     @Override
     public void installExtension(QuPathGUI qupath) {
+		if (isInstalled) {
+			logger.debug("{} is already installed. Skipping installation", getName());
+			return;
+		}
+		isInstalled = true;
 
     	qupath.installActions(ActionTools.getAnnotatedActions(new ExperimentalCommands(qupath)));
     }
 
     @Override
     public String getName() {
-        return "Align extension";
+        return EXTENSION_NAME;
     }
 
     @Override
     public String getDescription() {
-        return "Adds the 'Interactive image alignment' command";
+        return EXTENSION_DESCRIPTION;
     }
-
-	@Override
-	public GitHubRepo getRepository() {
-		return GitHubRepo.create(getName(), "qupath", "qupath-extension-align");
-	}
 	
 	@Override
 	public Version getQuPathVersion() {
-		return Version.parse("0.5.0");
+		return EXTENSION_QUPATH_VERSION;
 	}
-	
+
+	private static class ExperimentalCommands {
+
+		@ActionMenu("Menu.Analyze>Alignment")
+		public final Action actionInteractiveAlignment;
+
+		private ExperimentalCommands(QuPathGUI qupath) {
+			var interactiveAlignment = new InteractiveImageAlignmentCommand(qupath);
+
+			actionInteractiveAlignment = qupath.createProjectAction(project -> interactiveAlignment.run());
+			actionInteractiveAlignment.setText(resources.getString("Extension.interactiveImageAlignment"));
+			actionInteractiveAlignment.setLongText(resources.getString("Extension.interactiveImageAlignmentDescription"));
+		}
+	}
 }
