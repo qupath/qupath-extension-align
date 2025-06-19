@@ -20,7 +20,7 @@
 
 <fx:root title="%ImageOverlayAlignmentWindow.title" type="Stage" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
     <scene>
-        <Scene stylesheets="@styles.css">
+        <Scene stylesheets="@../styles.css">
             <SplitPane dividerPositions="0.35">
                 <TitledPane collapsible="false" text="%ImageOverlayAlignmentWindow.imageAndOverlays">
                     <GridPane hgap="5.0" maxWidth="1.7976931348623157E308" vgap="5.0">

@@ -1,4 +1,4 @@
-package qupath.ext.align.gui;
+package qupath.ext.align.gui.interactive;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

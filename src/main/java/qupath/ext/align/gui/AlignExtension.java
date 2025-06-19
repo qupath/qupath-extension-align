@@ -25,7 +25,7 @@ import org.controlsfx.control.action.Action;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.ext.align.Utils;
+import qupath.ext.align.gui.interactive.AlignCommand;
 import qupath.lib.common.Version;
 import qupath.lib.gui.actions.ActionTools;
 import qupath.lib.gui.QuPathGUI;

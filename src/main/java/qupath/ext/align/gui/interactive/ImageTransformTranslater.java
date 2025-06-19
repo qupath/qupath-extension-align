@@ -1,4 +1,4 @@
-package qupath.ext.align.gui;
+package qupath.ext.align.gui.interactive;
 
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;

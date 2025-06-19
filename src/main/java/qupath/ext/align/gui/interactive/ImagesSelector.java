@@ -1,4 +1,4 @@
-package qupath.ext.align.gui;
+package qupath.ext.align.gui.interactive;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
@@ -10,7 +10,7 @@ import javafx.scene.layout.VBox;
 import org.controlsfx.control.ListSelectionView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.ext.align.Utils;
+import qupath.ext.align.gui.Utils;
 import qupath.lib.projects.ProjectImageEntry;
 
 import java.awt.image.BufferedImage;

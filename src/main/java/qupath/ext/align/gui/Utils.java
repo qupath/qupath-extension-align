@@ -1,4 +1,4 @@
-package qupath.ext.align;
+package qupath.ext.align.gui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
- * Utility methods for the whole extension.
+ * UI utility methods for the whole extension.
  */
 public class Utils {
 

@@ -1,4 +1,4 @@
-package qupath.ext.align.gui;
+package qupath.ext.align.gui.interactive;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -26,7 +26,7 @@ import javafx.util.StringConverter;
 import org.controlsfx.control.CheckListView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.ext.align.Utils;
+import qupath.ext.align.gui.Utils;
 import qupath.ext.align.core.AutoAligner;
 import qupath.ext.align.core.ImageTransform;
 import qupath.fx.dialogs.Dialogs;
@@ -43,7 +43,6 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +54,7 @@ import java.util.stream.Collectors;
 /**
  * A window allowing to align images on top of others by using an {@link AlignOverlay}.
  */
-class AlignWindow extends Stage {
+public class AlignWindow extends Stage {
 
     private static final Logger logger = LoggerFactory.getLogger(AlignWindow.class);
     private static final ResourceBundle resources = Utils.getResources();
@@ -474,7 +473,7 @@ class AlignWindow extends Stage {
         try {
             double[] values = GeometryTools.parseTransformMatrix(affineTransformation.getText()).getMatrixEntries();
             imageTransform.setTransform(values[0], values[3], values[1], values[4], values[2], values[5]);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             logger.error("Cannot parse transform {}. {} not updated", affineTransformation.getText(), imageTransform, e);
 
             Dialogs.showErrorMessage(

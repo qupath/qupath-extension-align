@@ -19,7 +19,7 @@
  * #L%
  */
 
-package qupath.ext.align.gui;
+package qupath.ext.align.gui.interactive;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ import java.util.Objects;
  * 
  * @author Pete Bankhead
  */
-class AlignCommand implements Runnable {
+public class AlignCommand implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(AlignCommand.class);
 	private final QuPathGUI qupath;
