@@ -25,6 +25,7 @@ import org.controlsfx.control.action.Action;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qupath.ext.align.Utils;
 import qupath.lib.common.Version;
 import qupath.lib.gui.actions.ActionTools;
 import qupath.lib.gui.QuPathGUI;
@@ -74,14 +75,12 @@ public class AlignExtension implements QuPathExtension {
 	private static class ExperimentalCommands {
 
 		@ActionMenu("Menu.Analyze>Alignment")
-		public final Action actionInteractiveAlignment;
+		public final Action imageAlignmentAction;
 
 		private ExperimentalCommands(QuPathGUI qupath) {
-			var interactiveAlignment = new InteractiveImageAlignmentCommand(qupath);
-
-			actionInteractiveAlignment = qupath.createProjectAction(project -> interactiveAlignment.run());
-			actionInteractiveAlignment.setText(resources.getString("Extension.interactiveImageAlignment"));
-			actionInteractiveAlignment.setLongText(resources.getString("Extension.interactiveImageAlignmentDescription"));
+			imageAlignmentAction = ActionTools.createAction(new AlignCommand(qupath));
+			imageAlignmentAction.setText(resources.getString("Extension.interactiveImageAlignment"));
+			imageAlignmentAction.setLongText(resources.getString("Extension.interactiveImageAlignmentDescription"));
 		}
 	}
 }

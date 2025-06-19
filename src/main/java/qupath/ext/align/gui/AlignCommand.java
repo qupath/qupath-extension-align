@@ -21,40 +21,46 @@
 
 package qupath.ext.align.gui;
 
-import qupath.fx.dialogs.Dialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qupath.lib.gui.QuPathGUI;
 
-import java.util.ResourceBundle;
+import java.io.IOException;
+import java.util.Objects;
 
 /**
- * Command to interactively adjust apply an affine transform to an image overlay.
+ * A command to start an {@link AlignWindow}.
  * 
  * @author Pete Bankhead
  */
-public class InteractiveImageAlignmentCommand implements Runnable {
+class AlignCommand implements Runnable {
 
-	private static final ResourceBundle resources = Utils.getResources();
+	private static final Logger logger = LoggerFactory.getLogger(AlignCommand.class);
 	private final QuPathGUI qupath;
+	private AlignWindow alignWindow;
 	
 	/**
-	 * Constructor.
+	 * Create the command.
 	 *
 	 * @param qupath the QuPath GUI that should own this command
+	 * @throws NullPointerException if the provided parameter is null
 	 */
-	public InteractiveImageAlignmentCommand(QuPathGUI qupath) {
-		this.qupath = qupath;
+	public AlignCommand(QuPathGUI qupath) {
+		this.qupath = Objects.requireNonNull(qupath);
 	}
 
 	@Override
 	public void run() {
-		if (qupath.getImageData() == null) {
-			Dialogs.showErrorMessage(
-					resources.getString("InteractiveImageAlignmentCommand.interactiveImageAlignment"),
-					resources.getString("InteractiveImageAlignmentCommand.openImageFirst")
-			);
-			return;
-		}
-
-		new ImageAlignmentPane(qupath);
+		if (alignWindow == null) {
+            try {
+				logger.debug("Image alignment window of {} does not exit. Creating it", qupath);
+                alignWindow = new AlignWindow(qupath);
+            } catch (IOException e) {
+				logger.error("Error while creating image overlay alignment window", e);
+				return;
+            }
+        }
+		alignWindow.show();
+		alignWindow.requestFocus();
 	}
 }
