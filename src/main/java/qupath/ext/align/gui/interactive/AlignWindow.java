@@ -397,7 +397,7 @@ public class AlignWindow extends Stage {
             return;
         }
 
-        ImageData<BufferedImage> baseImageData = quPath.getViewer().getImageData();
+        ImageData<BufferedImage> baseImageData = quPath.getViewer() == null ? null : quPath.getViewer().getImageData();
         if (baseImageData == null) {
             Dialogs.showErrorMessage(
                     resources.getString("ImageOverlayAlignmentWindow.alignmentError"),
@@ -413,7 +413,7 @@ public class AlignWindow extends Stage {
             );
             return;
         }
-        if (baseImageData == imageDataToAlign) {
+        if (baseImageData.equals(imageDataToAlign)) {
             Dialogs.showErrorMessage(
                     resources.getString("ImageOverlayAlignmentWindow.alignmentError"),
                     resources.getString("ImageOverlayAlignmentWindow.selectImageOverlay")
@@ -562,7 +562,7 @@ public class AlignWindow extends Stage {
             return;
         }
 
-        ImageData<BufferedImage> baseImageData = quPath.getViewer().getImageData();
+        ImageData<BufferedImage> baseImageData = quPath.getViewer() == null ? null : quPath.getViewer().getImageData();
         if (baseImageData == null) {
             Dialogs.showErrorMessage(
                     resources.getString("ImageOverlayAlignmentWindow.propagateAnnotations"),
@@ -578,7 +578,7 @@ public class AlignWindow extends Stage {
             );
             return;
         }
-        if (baseImageData == selectedImageData) {
+        if (baseImageData.equals(selectedImageData)) {
             Dialogs.showErrorMessage(
                     resources.getString("ImageOverlayAlignmentWindow.propagateAnnotations"),
                     resources.getString("ImageOverlayAlignmentWindow.selectImageOverlay")
