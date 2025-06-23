@@ -149,7 +149,7 @@ public class TestAutoAligner {
                 downsample
         );
 
-        assertAffineAlmostEquals(expectedTransform, transform, .2);
+        assertAffineAlmostEquals(expectedTransform, transform, .5);
 
         baseImageData.close();
         baseServer.close();

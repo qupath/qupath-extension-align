@@ -253,8 +253,11 @@ public class AutoAligner {
                     case AFFINE -> opencv_calib3d.estimateAffine2D(baseMat, matToAlign);
                     case RIGID -> opencv_calib3d.estimateAffinePartial2D(baseMat, matToAlign);
                 };
-                Indexer indexer = matTransform.createIndexer()
+                Indexer indexer = matTransform.ptr() == null ? null : matTransform.createIndexer()
         ) {
+            if (indexer == null) {
+                throw new NullPointerException("Failed to estimate the transformation.");
+            }
             return matToTransform(indexer, 1.0);
         }
     }
