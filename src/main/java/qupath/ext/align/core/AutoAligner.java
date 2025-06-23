@@ -1,6 +1,5 @@
 package qupath.ext.align.core;
 
-import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.Indexer;
 import org.bytedeco.opencv.global.opencv_calib3d;
 import org.bytedeco.opencv.global.opencv_core;
@@ -82,10 +81,10 @@ public class AutoAligner {
      *
      * @param baseImageData the image to align to
      * @param imageDataToAlign the image to align
-     * @param transform an initial transformation from the base image to the image to align. This will
-     *                  be used as a starting point in some auto alignment algorithm. This function is
-     *                  more likely to succeed if the images have been already coarsely aligned with the provided
-     *                  transform. Not used if the alignment type is {@link AlignmentType#POINT_ANNOTATIONS}
+     * @param initialTransform an initial transformation from the base image to the image to align. This will
+     *                         be used as a starting point in some auto alignment algorithm. This function is
+     *                         more likely to succeed if the images have been already coarsely aligned with the provided
+     *                         transform. Not used if the alignment type is {@link AlignmentType#POINT_ANNOTATIONS}
      * @param alignmentType what to look on the images when performing auto alignment. Take a look at the
      *                      enumeration documentation for more information
      * @param transformationTypes what combinations of transformation can be used when performing auto alignment.
@@ -99,7 +98,7 @@ public class AutoAligner {
     public static AffineTransform getAlignTransformation(
             ImageData<BufferedImage> baseImageData,
             ImageData<BufferedImage> imageDataToAlign,
-            AffineTransform transform,
+            AffineTransform initialTransform,
             AlignmentType alignmentType,
             TransformationTypes transformationTypes,
             double downsample
@@ -108,7 +107,7 @@ public class AutoAligner {
             case INTENSITY -> {
                 logger.debug("Image alignment of {} on {} using intensities", imageDataToAlign, baseImageData);
 
-                yield alignWithEccCriterion(baseImageData.getServer(), imageDataToAlign.getServer(), transformationTypes, transform, downsample);
+                yield alignWithEccCriterion(baseImageData.getServer(), imageDataToAlign.getServer(), transformationTypes, initialTransform, downsample);
             }
             case AREA_ANNOTATIONS -> {
                 logger.debug("Image alignment of {} on {} using area annotations", imageDataToAlign, baseImageData);
@@ -147,7 +146,7 @@ public class AutoAligner {
                                 .downsample(downsample)
                                 .build(),
                         transformationTypes,
-                        transform,
+                        initialTransform,
                         1
                 );
             }
@@ -163,7 +162,7 @@ public class AutoAligner {
             ImageServer<BufferedImage> baseServer,
             ImageServer<BufferedImage> serverToAlign,
             TransformationTypes transformationTypes,
-            AffineTransform transform,
+            AffineTransform initialTransform,
             double downsample
     ) throws Exception {
         BufferedImage baseImage = ensureGrayScale(baseServer.readRegion(RegionRequest.createInstance(
@@ -188,10 +187,10 @@ public class AutoAligner {
                 Mat matToAlign = OpenCVTools.imageToMat(imageToAlign);
                 MatExpr matExprTransform = Mat.eye(2, 3, opencv_core.CV_32F);
                 Mat matTransform = matExprTransform.asMat();
-                FloatIndexer indexer = matTransform.createIndexer();
+                Indexer indexer = matTransform.createIndexer();
                 TermCriteria termCriteria = new TermCriteria(TermCriteria.COUNT, ECC_MAX_COUNT, ECC_EPSILON)
         ) {
-            transformToMat(transform, indexer, downsample);
+            transformToMat(initialTransform, indexer, downsample);
 
             logger.debug(
                     "Finding ECC transform from {} to {} with downsample {} and transformation types {}",
@@ -254,7 +253,7 @@ public class AutoAligner {
                     case AFFINE -> opencv_calib3d.estimateAffine2D(baseMat, matToAlign);
                     case RIGID -> opencv_calib3d.estimateAffinePartial2D(baseMat, matToAlign);
                 };
-                FloatIndexer indexer = matTransform.createIndexer()
+                Indexer indexer = matTransform.createIndexer()
         ) {
             return matToTransform(indexer, 1.0);
         }
@@ -286,13 +285,13 @@ public class AutoAligner {
         };
     }
 
-    private static void transformToMat(AffineTransform transform, FloatIndexer indexer, double downsample) {
-        indexer.put(0, 0, (float)transform.getScaleX());
-        indexer.put(0, 1, (float)transform.getShearX());
-        indexer.put(0, 2, (float)(transform.getTranslateX() / downsample));
-        indexer.put(1, 0, (float)transform.getShearY());
-        indexer.put(1, 1, (float)transform.getScaleY());
-        indexer.put(1, 2, (float)(transform.getTranslateY() / downsample));
+    private static void transformToMat(AffineTransform transform, Indexer indexer, double downsample) {
+        indexer.putDouble(new long[]{0, 0}, transform.getScaleX());
+        indexer.putDouble(new long[]{0, 1}, transform.getShearX());
+        indexer.putDouble(new long[]{0, 2}, transform.getTranslateX() / downsample);
+        indexer.putDouble(new long[]{1, 0}, transform.getShearY());
+        indexer.putDouble(new long[]{1, 1}, transform.getScaleY());
+        indexer.putDouble(new long[]{1, 2}, transform.getTranslateY() / downsample);
     }
 
     private static AffineTransform matToTransform(Indexer indexer, double downsample) {
@@ -317,10 +316,10 @@ public class AutoAligner {
 
     private static Mat pointsToMat(List<Point2> points) {
         Mat mat = new Mat(points.size(), 2, opencv_core.CV_32FC1);
-        try (FloatIndexer indexer = mat.createIndexer()) {
+        try (Indexer indexer = mat.createIndexer()) {
             for (int i=0; i<points.size(); i++) {
-                indexer.put(i, 0, (float)points.get(i).getX());
-                indexer.put(i, 1, (float)points.get(i).getY());
+                indexer.putDouble(new long[]{i, 0}, points.get(i).getX());
+                indexer.putDouble(new long[]{i, 1}, points.get(i).getY());
             }
         }
         return mat;

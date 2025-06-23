@@ -82,7 +82,7 @@ public class ImageTransform {
 
     /**
      * Call {@link AutoAligner#getAlignTransformation(ImageData, ImageData, AffineTransform, AutoAligner.AlignmentType, AutoAligner.TransformationTypes, double)}
-     * and update the transform with the result.
+     * with the current transform and update the transform with the result.
      */
     public void alignTransform(
             ImageData<BufferedImage> baseImageData,

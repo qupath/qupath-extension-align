@@ -15,4 +15,6 @@ dependencies {
 	implementation(libs.bundles.logging)
 	implementation(libs.qupath.fxtras)
 	implementation(libs.guava)
+
+	testImplementation(libs.junit)
 }
