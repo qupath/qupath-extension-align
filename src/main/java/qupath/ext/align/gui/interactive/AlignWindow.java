@@ -61,8 +61,8 @@ public class AlignWindow extends Stage {
     private static final double DEFAULT_OPACITY = 1;
     private static final int DEFAULT_ROTATION_INCREMENT = 1;
     private static final double DEFAULT_PIXEL_SIZE_MICRONS = 20;
+    private final ObjectProperty<AffineImageTransform> selectedImageTransform = new SimpleObjectProperty<>();
     private final Map<ImageDataViewer, AffineImageTransform> imageDataAndViewerToTransform;
-    private final ObjectProperty<AffineImageTransform> selectedImageTransform;
     private final QuPathGUI quPath;
     private AlignOverlay currentOverlay;
     private record ImageDataViewer(ImageData<BufferedImage> imageData, QuPathViewer viewer) {}
@@ -130,15 +130,18 @@ public class AlignWindow extends Stage {
                 }
         );
 
-        selectedImageTransform = new SimpleObjectProperty<>();
-        selectedImageTransform.bind(Bindings.createObjectBinding(
-                () -> imageDataAndViewerToTransform.get(new ImageDataViewer(
-                        images.getSelectionModel().selectedItemProperty().get(),
+        images.getSelectionModel().selectedItemProperty().addListener((p, o, n) ->
+                selectedImageTransform.set(imageDataAndViewerToTransform.get(new ImageDataViewer(
+                        n,
                         quPath.viewerProperty().get()
-                )),
-                images.getSelectionModel().selectedItemProperty(),
-                quPath.viewerProperty()
-        ));
+                )))
+        );
+        quPath.viewerProperty().addListener((p, o, n) ->
+                selectedImageTransform.set(imageDataAndViewerToTransform.get(new ImageDataViewer(
+                        images.getSelectionModel().selectedItemProperty().get(),
+                        n
+                )))
+        );
 
         BooleanProperty inactiveOverlayImageOrViewerImage = new SimpleBooleanProperty(true);
         selectedImageTransform.addListener((p, o, n) ->
