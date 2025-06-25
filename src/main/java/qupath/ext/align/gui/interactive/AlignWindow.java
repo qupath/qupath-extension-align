@@ -457,9 +457,9 @@ public class AlignWindow extends Stage {
         } catch (Error e) {     //TODO: to remove when https://github.com/qupath/qupath-extension-align/issues/15 is fixed
             Dialogs.showErrorMessage(
                     resources.getString("ImageOverlayAlignmentWindow.alignmentError"),
-                    "Auto alignment functions are not currently available. Please see https://github.com/qupath/qupath-extension-align/issues/15 for more information."
+                    "Auto-alignment is not currently available on this platform. Please see the log for more details."
             );
-            logger.error("Error when auto aligning {} to {}", imageDataToAlign, baseImageData, e);
+            logger.error("Error when auto aligning {} to {}. Please see https://github.com/qupath/qupath-extension-align/issues/15 for more information", imageDataToAlign, baseImageData, e);
             return;
         }
 
