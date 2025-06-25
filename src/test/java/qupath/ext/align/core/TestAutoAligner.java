@@ -1,6 +1,10 @@
 package qupath.ext.align.core;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import qupath.lib.awt.common.BufferedImageTools;
@@ -23,6 +27,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 
+@ExtendWith(TestAutoAligner.AbortOnLinkageError.class)      // some environments might lack OpenCV native libraries. In that case, tests are skipped
 public class TestAutoAligner {
 
     @ParameterizedTest
@@ -433,6 +438,18 @@ public class TestAutoAligner {
         baseServer.close();
         imageDataToAlign.close();
         serverToAlign.close();
+    }
+
+    static class AbortOnLinkageError implements TestExecutionExceptionHandler {
+
+        @Override
+        public void handleTestExecutionException(ExtensionContext context, Throwable throwable) throws Throwable {
+            if (throwable instanceof LinkageError) {
+                Assumptions.abort(throwable.getMessage());
+            } else {
+                throw  throwable;
+            }
+        }
     }
 
     private static int[][] createPixels(int width, int height) {
