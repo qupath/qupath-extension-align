@@ -54,7 +54,7 @@ public class AlignExtension implements QuPathExtension {
 		}
 		isInstalled = true;
 
-    	qupath.installActions(ActionTools.getAnnotatedActions(new ExperimentalCommands(qupath)));
+    	qupath.installActions(ActionTools.getAnnotatedActions(new InteractiveAlignmentCommand(qupath)));
     }
 
     @Override
@@ -72,12 +72,12 @@ public class AlignExtension implements QuPathExtension {
 		return EXTENSION_QUPATH_VERSION;
 	}
 
-	private static class ExperimentalCommands {
+	private static class InteractiveAlignmentCommand {
 
-		@ActionMenu("Menu.Analyze>Alignment")
+		@ActionMenu("Menu.Extensions>Alignment")
 		public final Action imageAlignmentAction;
 
-		private ExperimentalCommands(QuPathGUI qupath) {
+		private InteractiveAlignmentCommand(QuPathGUI qupath) {
 			imageAlignmentAction = ActionTools.createAction(new AlignCommand(qupath));
 			imageAlignmentAction.setText(resources.getString("Extension.interactiveImageAlignment"));
 			imageAlignmentAction.setLongText(resources.getString("Extension.interactiveImageAlignmentDescription"));
