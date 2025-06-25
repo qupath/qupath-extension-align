@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class TestImageTransform {
+public class TestAffineImageTransform {
 
     private static ImageServer<BufferedImage> sampleImageServer;
     private static ImageData<BufferedImage> imageData;
@@ -70,7 +70,7 @@ public class TestImageTransform {
     void Check_Image_Transform_Creation_With_Null_Image_Data() {
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImageTransform(null, viewer)
+                () -> new AffineImageTransform(null, viewer)
         );
     }
 
@@ -78,16 +78,16 @@ public class TestImageTransform {
     void Check_Image_Transform_Creation_With_Null_Viewer() {
         Assertions.assertThrows(
                 NullPointerException.class,
-                () -> new ImageTransform(imageData, null)
+                () -> new AffineImageTransform(imageData, null)
         );
     }
 
     @Test
     void Check_Initial_Transform() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         AffineTransform expectedTransform = new AffineTransform();
 
-        AffineTransform transform = imageTransform.getTransform().getValue();
+        AffineTransform transform = affineImageTransform.getTransform().getValue();
 
         Assertions.assertEquals(expectedTransform, transform);
     }
@@ -98,10 +98,10 @@ public class TestImageTransform {
         ImageData<BufferedImage> viewerImageData = new ImageData<>(viewerImageServer, new PathObjectHierarchy(), ImageData.ImageType.UNSET);
         FXUtils.runOnApplicationThread(QuPathGUI::createHiddenInstance);        // this is needed for viewer.setImageData to work
         viewer.setImageData(viewerImageData);
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         AffineTransform expectedTransform = new AffineTransform(1.23 / 5.78, 0, 0, 2.34 / 8, 0, 0);
 
-        AffineTransform transform = imageTransform.getTransform().getValue();
+        AffineTransform transform = affineImageTransform.getTransform().getValue();
 
         Assertions.assertEquals(expectedTransform, transform);
 
@@ -112,11 +112,11 @@ public class TestImageTransform {
 
     @Test
     void Check_Transform_Property_Updated_After_Modified() throws InterruptedException {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         CountDownLatch latch = new CountDownLatch(1);
 
-        imageTransform.getTransform().addListener((p, o, n) -> latch.countDown());
-        imageTransform.translateTransform(1, 2);
+        affineImageTransform.getTransform().addListener((p, o, n) -> latch.countDown());
+        affineImageTransform.translateTransform(1, 2);
         boolean transformUpdated = latch.await(5, TimeUnit.SECONDS);
 
         Assertions.assertTrue(transformUpdated);
@@ -124,7 +124,7 @@ public class TestImageTransform {
 
     @Test
     void Check_Transform_After_Set() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         double m00 = 1.23;
         double m10 = 5;
         double m01 = 234.432;
@@ -133,26 +133,26 @@ public class TestImageTransform {
         double m12 = -9;
         AffineTransform expectedTransform = new AffineTransform(m00, m10, m01, m11, m02, m12);
 
-        imageTransform.setTransform(m00, m10, m01, m11, m02, m12);
+        affineImageTransform.setTransform(m00, m10, m01, m11, m02, m12);
 
-        Assertions.assertEquals(expectedTransform, imageTransform.getTransform().getValue());
+        Assertions.assertEquals(expectedTransform, affineImageTransform.getTransform().getValue());
     }
 
     @Test
     void Check_Transform_After_Translation() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         double x = 1.23;
         double y = 5;
         AffineTransform expectedTransform = new AffineTransform(1, 0, 0, 1, x, y);
 
-        imageTransform.translateTransform(x, y);
+        affineImageTransform.translateTransform(x, y);
 
-        Assertions.assertEquals(expectedTransform, imageTransform.getTransform().getValue());
+        Assertions.assertEquals(expectedTransform, affineImageTransform.getTransform().getValue());
     }
 
     @Test
     void Check_Transform_After_Rotation() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         double theta = Math.toRadians(109);
         AffineTransform expectedTransform = new AffineTransform(
                 Math.cos(theta),
@@ -163,42 +163,42 @@ public class TestImageTransform {
                 0
         );
 
-        imageTransform.rotateTransform(theta, 0, 0);
+        affineImageTransform.rotateTransform(theta, 0, 0);
 
-        Assertions.assertEquals(expectedTransform, imageTransform.getTransform().getValue());
+        Assertions.assertEquals(expectedTransform, affineImageTransform.getTransform().getValue());
     }
 
     @Test
     void Check_Transform_After_Inverted_When_Non_Invertible() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.setTransform(1, 0, 0, 0, 0, 0);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.setTransform(1, 0, 0, 0, 0, 0);
 
         Assertions.assertThrows(
                 NoninvertibleTransformException.class,
-                imageTransform::invertTransform
+                affineImageTransform::invertTransform
         );
     }
 
     @Test
     void Check_Transform_After_Inverted_When_Invertible() throws NoninvertibleTransformException {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.setTransform(1, 0, 1, 1, 0, 0);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.setTransform(1, 0, 1, 1, 0, 0);
         AffineTransform expectedTransform = new AffineTransform(1, 0, -1, 1, 0, 0);
 
-        imageTransform.invertTransform();
+        affineImageTransform.invertTransform();
 
-        Assertions.assertEquals(expectedTransform, imageTransform.getTransform().getValue());
+        Assertions.assertEquals(expectedTransform, affineImageTransform.getTransform().getValue());
     }
 
     @Test
     void Check_Transform_After_Reset() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.setTransform(1, 1, 1, 1, 1, 1);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.setTransform(1, 1, 1, 1, 1, 1);
         AffineTransform expectedTransform = new AffineTransform();
 
-        imageTransform.resetTransform();
+        affineImageTransform.resetTransform();
 
-        Assertions.assertEquals(expectedTransform, imageTransform.getTransform().getValue());
+        Assertions.assertEquals(expectedTransform, affineImageTransform.getTransform().getValue());
     }
 
     @Test
@@ -207,13 +207,13 @@ public class TestImageTransform {
         ImageData<BufferedImage> viewerImageData = new ImageData<>(viewerImageServer, new PathObjectHierarchy(), ImageData.ImageType.UNSET);
         FXUtils.runOnApplicationThread(QuPathGUI::createHiddenInstance);        // this is needed for viewer.setImageData to work
         viewer.setImageData(viewerImageData);
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.setTransform(1, 1, 1, 1, 1, 1);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.setTransform(1, 1, 1, 1, 1, 1);
         AffineTransform expectedTransform = new AffineTransform(1.23 / 5.78, 0, 0, 2.34 / 8, 0, 0);
 
-        imageTransform.resetTransform();
+        affineImageTransform.resetTransform();
 
-        Assertions.assertEquals(expectedTransform, imageTransform.getTransform().getValue());
+        Assertions.assertEquals(expectedTransform, affineImageTransform.getTransform().getValue());
 
         viewer.resetImageData();
         viewerImageData.close();
@@ -222,70 +222,70 @@ public class TestImageTransform {
 
     @Test
     void Check_Inverse_Transform() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.setTransform(1, 0, 1, 1, 0, 0);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.setTransform(1, 0, 1, 1, 0, 0);
         AffineTransform expectedInverseTransform = new AffineTransform(1, 0, -1, 1, 0, 0);
 
-        AffineTransform inverseTransform = imageTransform.getInverseTransform();
+        AffineTransform inverseTransform = affineImageTransform.getInverseTransform();
 
         Assertions.assertEquals(expectedInverseTransform, inverseTransform);
     }
 
     @Test
     void Check_Inverse_Transform_When_Transform_Not_Invertible() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.setTransform(1, 0, 1, 1, 0, 0);
-        imageTransform.setTransform(1, 0, 0, 0, 0, 0);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.setTransform(1, 0, 1, 1, 0, 0);
+        affineImageTransform.setTransform(1, 0, 0, 0, 0, 0);
         AffineTransform expectedInverseTransform = new AffineTransform(1, 0, -1, 1, 0, 0);
 
-        AffineTransform inverseTransform = imageTransform.getInverseTransform();
+        AffineTransform inverseTransform = affineImageTransform.getInverseTransform();
 
         Assertions.assertEquals(expectedInverseTransform, inverseTransform);
     }
 
     @Test
     void Check_Transformed_Points_With_Identity() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         ROI roi = ROIs.createPointsROI(List.of(new Point2(2, 4.45), new Point2(-4.54, 0)));
 
-        ROI transformedRoi = imageTransform.transformROI(roi);
+        ROI transformedRoi = affineImageTransform.transformROI(roi);
 
         Assertions.assertEquals(roi, transformedRoi);
     }
 
     @Test
     void Check_Transformed_Points_With_Translation() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.translateTransform(4.54, -6);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.translateTransform(4.54, -6);
         ROI roi = ROIs.createPointsROI(List.of(new Point2(2, 7.45), new Point2(-14.54, 0)));
         ROI expectedTransformedRoi = ROIs.createPointsROI(List.of(
                 new Point2(2 + 4.54, 7.45 - 6),
                 new Point2(-14.54 + 4.54, -6)
         ));
 
-        ROI transformedRoi = imageTransform.transformROI(roi);
+        ROI transformedRoi = affineImageTransform.transformROI(roi);
 
         Assertions.assertEquals(expectedTransformedRoi, transformedRoi);
     }
 
     @Test
     void Check_Transformed_Line_With_Identity() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
         ROI roi = ROIs.createLineROI(4.3, -23, 5, 50);
 
-        ROI transformedRoi = imageTransform.transformROI(roi);
+        ROI transformedRoi = affineImageTransform.transformROI(roi);
 
         Assertions.assertEquals(roi, transformedRoi);
     }
 
     @Test
     void Check_Transformed_Line_With_Translation() {
-        ImageTransform imageTransform = new ImageTransform(imageData, viewer);
-        imageTransform.translateTransform(4.54, -6);
+        AffineImageTransform affineImageTransform = new AffineImageTransform(imageData, viewer);
+        affineImageTransform.translateTransform(4.54, -6);
         ROI roi = ROIs.createLineROI(4.3, -23, 5, 50);
         ROI expectedTransformedRoi = ROIs.createLineROI(4.3 + 4.54, -23 - 6, 5 + 4.54, 50 - 6);
 
-        ROI transformedRoi = imageTransform.transformROI(roi);
+        ROI transformedRoi = affineImageTransform.transformROI(roi);
 
         Assertions.assertEquals(expectedTransformedRoi, transformedRoi);
     }

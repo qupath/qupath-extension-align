@@ -28,9 +28,9 @@ import java.util.Objects;
  * <p>
  * This class is not thread-safe.
  */
-public class ImageTransform {
+public class AffineImageTransform {
 
-    private static final Logger logger = LoggerFactory.getLogger(ImageTransform.class);
+    private static final Logger logger = LoggerFactory.getLogger(AffineImageTransform.class);
     private final ObjectProperty<AffineTransform> transform = new SimpleObjectProperty<>(new AffineTransform());
     private final ImageData<BufferedImage> imageData;
     private final QuPathViewer viewer;
@@ -38,7 +38,7 @@ public class ImageTransform {
     private ImageDisplay imageDisplay;
 
     /**
-     * Create the image transform.
+     * Create the affine image transform.
      * <p>
      * The transform will be initialized as the identity matrix. If the provided image data
      * and the provided viewer have a defined pixel size in microns, the transform will be scaled to
@@ -51,7 +51,7 @@ public class ImageTransform {
      * @param viewer the viewer the image should be transformed to
      * @throws NullPointerException if one of the provided parameters is null
      */
-    public ImageTransform(ImageData<BufferedImage> imageData, QuPathViewer viewer) {
+    public AffineImageTransform(ImageData<BufferedImage> imageData, QuPathViewer viewer) {
         this.imageData = Objects.requireNonNull(imageData);
         this.viewer = Objects.requireNonNull(viewer);
 
@@ -154,7 +154,7 @@ public class ImageTransform {
     }
 
     /**
-     * Reset the transform with the value described in {@link #ImageTransform(ImageData, QuPathViewer)}.
+     * Reset the transform with the value described in {@link #AffineImageTransform(ImageData, QuPathViewer)}.
      */
     public void resetTransform() {
         AffineTransform transform = new AffineTransform();

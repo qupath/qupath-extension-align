@@ -5,7 +5,7 @@ import javafx.beans.value.ObservableDoubleValue;
 import javafx.beans.value.ObservableValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qupath.ext.align.core.ImageTransform;
+import qupath.ext.align.core.AffineImageTransform;
 import qupath.lib.display.ImageDisplay;
 import qupath.lib.gui.prefs.PathPrefs;
 import qupath.lib.gui.viewer.QuPathViewer;
@@ -28,10 +28,10 @@ class AlignOverlay extends AbstractOverlay implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(AlignOverlay.class);
     private final QuPathViewer viewer;
-    private final ObservableValue<ImageTransform> observableImageTransform;
+    private final ObservableValue<AffineImageTransform> observableImageTransform;
     private final ObservableDoubleValue opacity;
     private final ChangeListener<? super Number> opacityListener;
-    private final ChangeListener<? super ImageTransform> transformListener;
+    private final ChangeListener<? super AffineImageTransform> transformListener;
 
     /**
      * Create the overlay and add it to the provided viewer's {@link QuPathViewer#getCustomOverlayLayers() list of custom overlay layers}.
@@ -45,7 +45,7 @@ class AlignOverlay extends AbstractOverlay implements AutoCloseable {
      *                the JavaFX Application Thread. It cannot be null but its value can
      * @throws NullPointerException if one of the provided parameters is null
      */
-    public AlignOverlay(QuPathViewer viewer, ObservableValue<ImageTransform> observableImageTransform, ObservableDoubleValue opacity) {
+    public AlignOverlay(QuPathViewer viewer, ObservableValue<AffineImageTransform> observableImageTransform, ObservableDoubleValue opacity) {
         super(viewer.getOverlayOptions());
 
         logger.debug("Creating overlay for {}", viewer);
@@ -74,26 +74,26 @@ class AlignOverlay extends AbstractOverlay implements AutoCloseable {
 
     @Override
     public void paintOverlay(Graphics2D g2d, ImageRegion imageRegion, double downsampleFactor, ImageData<BufferedImage> imageData, boolean paintCompletely) {
-        ImageTransform imageTransform = observableImageTransform.getValue();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = observableImageTransform.getValue();
+        if (affineImageTransform == null) {
             logger.trace("No current image transform. Cannot paint align overlay on {}", viewer);
             return;
         }
 
         ImageDisplay imageDisplay;
         try {
-            imageDisplay = imageTransform.getImageDisplay();
+            imageDisplay = affineImageTransform.getImageDisplay();
         } catch (IOException e) {
-            logger.error("Cannot get image display of {}. Cannot paint align overlay on {}", imageTransform, viewer, e);
+            logger.error("Cannot get image display of {}. Cannot paint align overlay on {}", affineImageTransform, viewer, e);
             return;
         }
 
-        logger.trace("Painting align overlay to {} with {}", viewer, imageTransform);
+        logger.trace("Painting align overlay to {} with {}", viewer, affineImageTransform);
 
         Graphics2D graphics = (Graphics2D) g2d.create();
 
         AffineTransform transform = graphics.getTransform();
-        transform.concatenate(imageTransform.getInverseTransform());
+        transform.concatenate(affineImageTransform.getInverseTransform());
         graphics.setTransform(transform);
 
         AlphaComposite composite = getAlphaComposite();
@@ -109,7 +109,7 @@ class AlignOverlay extends AbstractOverlay implements AutoCloseable {
         );
 
         viewer.getImageRegionStore().paintRegion(
-                imageTransform.getImageData().getServer(),
+                affineImageTransform.getImageData().getServer(),
                 graphics,
                 graphics.getClip(),
                 imageRegion.getZ(),

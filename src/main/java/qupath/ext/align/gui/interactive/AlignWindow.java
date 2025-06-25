@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qupath.ext.align.gui.Utils;
 import qupath.ext.align.core.AutoAligner;
-import qupath.ext.align.core.ImageTransform;
+import qupath.ext.align.core.AffineImageTransform;
 import qupath.fx.dialogs.Dialogs;
 import qupath.lib.gui.QuPathGUI;
 import qupath.lib.gui.viewer.QuPathViewer;
@@ -61,8 +61,8 @@ public class AlignWindow extends Stage {
     private static final double DEFAULT_OPACITY = 1;
     private static final int DEFAULT_ROTATION_INCREMENT = 1;
     private static final double DEFAULT_PIXEL_SIZE_MICRONS = 20;
-    private final Map<ImageDataViewer, ImageTransform> imageDataAndViewerToTransform;
-    private final ObjectProperty<ImageTransform> selectedImageTransform;
+    private final Map<ImageDataViewer, AffineImageTransform> imageDataAndViewerToTransform;
+    private final ObjectProperty<AffineImageTransform> selectedImageTransform;
     private final QuPathGUI quPath;
     private AlignOverlay currentOverlay;
     private record ImageDataViewer(ImageData<BufferedImage> imageData, QuPathViewer viewer) {}
@@ -122,7 +122,7 @@ public class AlignWindow extends Stage {
                 createImageDataViewerList(),
                 imageDataViewer -> {
                     try {
-                        return new ImageTransform(imageDataViewer.imageData(), imageDataViewer.viewer());
+                        return new AffineImageTransform(imageDataViewer.imageData(), imageDataViewer.viewer());
                     } catch (Exception e) {
                         logger.error("Error while getting image server of {}. Cannot create image transform", imageDataViewer.imageData(), e);
                         return null;
@@ -218,7 +218,7 @@ public class AlignWindow extends Stage {
 
         affineTransformation.editableProperty().bind(inactiveOverlayImageOrViewerImage.not());
         affineTransformation.setText(resources.getString("ImageOverlayAlignmentWindow.noOverlaySelected"));
-        selectedImageTransform.flatMap(ImageTransform::getTransform).addListener((p, o, n) -> {
+        selectedImageTransform.flatMap(AffineImageTransform::getTransform).addListener((p, o, n) -> {
             logger.trace("Transform of selected image transform updated to {}. Updating affine transformation text area", n);
 
             if (n == null) {
@@ -375,8 +375,8 @@ public class AlignWindow extends Stage {
 
     @FXML
     private void onEstimateTransformClicked(ActionEvent ignored) {
-        ImageTransform imageTransform = selectedImageTransform.get();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = selectedImageTransform.get();
+        if (affineImageTransform == null) {
             logger.error("No current image transform. Cannot estimate transform");
             return;
         }
@@ -437,7 +437,7 @@ public class AlignWindow extends Stage {
         }
 
         try {
-            imageTransform.alignTransform(
+            affineImageTransform.alignTransform(
                     baseImageData,
                     imageDataToAlign,
                     alignmentType.getValue(),
@@ -471,17 +471,17 @@ public class AlignWindow extends Stage {
 
     @FXML
     private void onUpdateClicked(ActionEvent ignored) {
-        ImageTransform imageTransform = selectedImageTransform.get();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = selectedImageTransform.get();
+        if (affineImageTransform == null) {
             logger.error("No current image transform. Cannot update transform from {}", affineTransformation.getText());
             return;
         }
 
         try {
             double[] values = GeometryTools.parseTransformMatrix(affineTransformation.getText()).getMatrixEntries();
-            imageTransform.setTransform(values[0], values[3], values[1], values[4], values[2], values[5]);
+            affineImageTransform.setTransform(values[0], values[3], values[1], values[4], values[2], values[5]);
         } catch (Exception e) {
-            logger.error("Cannot parse transform {}. {} not updated", affineTransformation.getText(), imageTransform, e);
+            logger.error("Cannot parse transform {}. {} not updated", affineTransformation.getText(), affineImageTransform, e);
 
             Dialogs.showErrorMessage(
                     resources.getString("ImageOverlayAlignmentWindow.parseAffineTransform"),
@@ -498,16 +498,16 @@ public class AlignWindow extends Stage {
 
     @FXML
     private void onInvertClicked(ActionEvent ignored) {
-        ImageTransform imageTransform = selectedImageTransform.get();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = selectedImageTransform.get();
+        if (affineImageTransform == null) {
             logger.error("No current image transform. Cannot invert transform");
             return;
         }
 
         try {
-            imageTransform.invertTransform();
+            affineImageTransform.invertTransform();
         } catch (NoninvertibleTransformException e) {
-            logger.error("Cannot invert {}", imageTransform, e);
+            logger.error("Cannot invert {}", affineImageTransform, e);
 
             Dialogs.showErrorNotification(
                     resources.getString("ImageOverlayAlignmentWindow.invertTransform"),
@@ -524,13 +524,13 @@ public class AlignWindow extends Stage {
 
     @FXML
     private void onResetClicked(ActionEvent ignored) {
-        ImageTransform imageTransform = selectedImageTransform.get();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = selectedImageTransform.get();
+        if (affineImageTransform == null) {
             logger.error("No current image transform. Cannot reset transform");
             return;
         }
 
-        imageTransform.resetTransform();
+        affineImageTransform.resetTransform();
 
         Dialogs.showInfoNotification(
                 resources.getString("ImageOverlayAlignmentWindow.resetTransform"),
@@ -540,8 +540,8 @@ public class AlignWindow extends Stage {
 
     @FXML
     private void onCopyClicked(ActionEvent ignored) {
-        ImageTransform imageTransform = selectedImageTransform.get();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = selectedImageTransform.get();
+        if (affineImageTransform == null) {
             logger.error("No current image transform. Cannot copy transform");
             return;
         }
@@ -563,8 +563,8 @@ public class AlignWindow extends Stage {
             logger.error("No current QuPath project. Cannot propagate annotations");
             return;
         }
-        ImageTransform imageTransform = selectedImageTransform.get();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = selectedImageTransform.get();
+        if (affineImageTransform == null) {
             logger.error("No current image transform. Cannot propagate annotations");
             return;
         }
@@ -601,11 +601,11 @@ public class AlignWindow extends Stage {
             return;
         }
 
-        logger.debug("Transforming with {} and copying annotations of {} to {}", imageTransform, baseImageData, selectedImageData);
+        logger.debug("Transforming with {} and copying annotations of {} to {}", affineImageTransform, baseImageData, selectedImageData);
         List<PathObject> transformedAnnotations = baseImageData.getHierarchy().getAnnotationObjects().stream()
                 .map(annotation -> {
                     PathObject newAnnotation = PathObjects.createAnnotationObject(
-                            imageTransform.transformROI(annotation.getROI()),
+                            affineImageTransform.transformROI(annotation.getROI()),
                             annotation.getPathClass(),
                             annotation.getMeasurementList()
                     );
@@ -681,8 +681,8 @@ public class AlignWindow extends Stage {
     }
 
     private void rotate(int sign) {
-        ImageTransform imageTransform = selectedImageTransform.get();
-        if (imageTransform == null) {
+        AffineImageTransform affineImageTransform = selectedImageTransform.get();
+        if (affineImageTransform == null) {
             logger.error("No current image transform. Cannot rotate transform");
             return;
         }
@@ -712,6 +712,6 @@ public class AlignWindow extends Stage {
             return;
         }
 
-        imageTransform.rotateTransform(Math.toRadians(theta), viewer.getCenterPixelX(), viewer.getCenterPixelY());
+        affineImageTransform.rotateTransform(Math.toRadians(theta), viewer.getCenterPixelX(), viewer.getCenterPixelY());
     }
 }
