@@ -11,12 +11,10 @@ qupathExtension {
 }
 
 dependencies {
-
 	implementation(libs.bundles.qupath)
 	implementation(libs.bundles.logging)
 	implementation(libs.qupath.fxtras)
+	implementation(libs.guava)
 
-	// For testing
 	testImplementation(libs.junit)
-
 }
