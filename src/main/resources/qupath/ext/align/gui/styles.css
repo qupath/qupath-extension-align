@@ -1,0 +1,11 @@
+.image-cell-thumbnail {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 4, 0, 1, 1);
+}
+
+.current-viewer-cell {
+    -fx-font-weight: bold;
+}
+
+.not-current-viewer-cell {
+    -fx-font-weight: normal;
+}
